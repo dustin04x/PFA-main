@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portail Étudiant | ISITCOM — Université de Sousse</title>
+  <meta name="description" content="Portail étudiant de l'ISITCOM : connexion, inscription, tableau de bord personnel et administration.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="portal">
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html">
+        <img src="photo/logo.jpg" alt="Logo ISITCOM">
+        <div class="brand-mark">
+          <strong>ISITCOM</strong>
+          <span>Université de Sousse</span>
+        </div>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" data-nav-toggle><i class="fas fa-bars"></i></button>
+      <nav class="nav-links" data-nav-menu>
+        <a href="index.html" data-nav="home">Accueil</a>
+        <a href="formations.html" data-nav="formations">Formations</a>
+        <a href="campus.html" data-nav="campus">Campus</a>
+        <a href="resources.html" data-nav="resources">Ressources</a>
+        <a href="events.html" data-nav="events">Événements</a>
+      </nav>
+      <div class="nav-actions">
+        <span class="pill hide-mobile" data-auth-chip>Accès visiteur</span>
+        <a class="button" href="portal.html">Portail étudiant</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <section class="page-intro">
+      <div class="container">
+        <span class="eyebrow"><i class="fas fa-user-shield"></i> Espace personnel</span>
+        <h1>Portail étudiant ISITCOM.</h1>
+        <p>Connectez-vous pour accéder à votre tableau de bord, vous inscrire à des clubs et des événements, et gérer votre dossier académique.</p>
+      </div>
+    </section>
+
+    <!-- AUTH SECTION: shown when NOT logged in -->
+    <section class="section" id="section-auth" data-section-guest>
+      <div class="container portal-grid">
+        <article class="auth-card">
+          <span class="card-label"><i class="fas fa-sign-in-alt"></i> Connexion</span>
+          <h3>Accéder à mon espace</h3>
+          <form data-login-form id="login-form">
+            <div class="form-field">
+              <label for="login-email">Adresse e-mail</label>
+              <input type="email" id="login-email" name="email" placeholder="prenom.nom@isitcom.rnu.tn" required>
+            </div>
+            <div class="form-field">
+              <label for="login-password">Mot de passe</label>
+              <input type="password" id="login-password" name="password" placeholder="••••••••" required>
+            </div>
+            <button class="button" type="submit" id="login-btn"><i class="fas fa-sign-in-alt"></i> Se connecter</button>
+          </form>
+        </article>
+
+        <article class="auth-card">
+          <span class="card-label"><i class="fas fa-user-plus"></i> Inscription</span>
+          <h3>Créer un compte</h3>
+          <form data-register-form id="register-form">
+            <div class="form-field">
+              <label for="reg-name">Nom complet</label>
+              <input type="text" id="reg-name" name="fullName" placeholder="Prénom Nom" required>
+            </div>
+            <div class="form-field">
+              <label for="reg-email">Adresse e-mail</label>
+              <input type="email" id="reg-email" name="email" placeholder="prenom.nom@isitcom.rnu.tn" required>
+            </div>
+            <div class="form-field">
+              <label for="reg-password">Mot de passe</label>
+              <input type="password" id="reg-password" name="password" placeholder="Min. 6 caractères" required>
+            </div>
+            <button class="button" type="submit" id="register-btn"><i class="fas fa-user-plus"></i> Créer mon compte</button>
+          </form>
+        </article>
+      </div>
+    </section>
+
+    <!-- STUDENT DASHBOARD: shown when logged in as student -->
+    <section class="section" id="section-student" data-section-student hidden>
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <h2 id="student-welcome">Bonjour !</h2>
+            <p>Votre tableau de bord étudiant — clubs rejoints, événements inscrits et dossier étudiant.</p>
+          </div>
+          <button class="button-ghost" type="button" id="logout-btn-student" data-logout>
+            <i class="fas fa-sign-out-alt"></i> Se déconnecter
+          </button>
+        </div>
+
+        <div class="portal-tabs">
+          <button class="tab-btn active" data-tab="tab-activity"><i class="fas fa-chart-bar"></i> Mon activité</button>
+          <button class="tab-btn" data-tab="tab-dossier"><i class="fas fa-folder-open"></i> Dossier étudiant</button>
+        </div>
+
+        <div id="tab-activity" class="tab-panel active">
+          <div data-user-dashboard>
+            <div class="empty-state"><i class="fas fa-spinner fa-spin"></i> Chargement…</div>
+          </div>
+        </div>
+
+        <div id="tab-dossier" class="tab-panel">
+          <article class="form-shell">
+            <h3><i class="fas fa-file-alt"></i> Déposer mon dossier d'inscription</h3>
+            <p class="form-hint">Complétez ce formulaire pour enregistrer vos informations académiques auprès de la scolarité.</p>
+            <form data-student-form id="student-form">
+              <div class="form-row">
+                <div class="form-field">
+                  <label for="s-nom">Nom</label>
+                  <input type="text" id="s-nom" name="nom" placeholder="Nom de famille" required>
+                </div>
+                <div class="form-field">
+                  <label for="s-prenom">Prénom</label>
+                  <input type="text" id="s-prenom" name="prenom" placeholder="Prénom" required>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-field">
+                  <label for="s-cin">CIN</label>
+                  <input type="text" id="s-cin" name="cin" placeholder="8 chiffres" maxlength="8" required>
+                </div>
+                <div class="form-field">
+                  <label for="s-email">Email institutionnel</label>
+                  <input type="email" id="s-email" name="email" placeholder="prenom.nom@isitcom.rnu.tn" required>
+                </div>
+              </div>
+              <div class="form-field">
+                <label for="s-classe">Formation</label>
+                <select id="s-classe" name="classe" required data-formation-select>
+                  <option value="">Sélectionnez votre formation</option>
+                </select>
+              </div>
+              <button class="button" type="submit" id="student-submit-btn"><i class="fas fa-paper-plane"></i> Envoyer le dossier</button>
+            </form>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN DASHBOARD: shown when logged in as admin -->
+    <section class="section" id="section-admin" data-section-admin hidden>
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <h2>Administration ISITCOM</h2>
+            <p>Gestion complète des formations, clubs, événements et utilisateurs.</p>
+          </div>
+          <button class="button-ghost" type="button" id="logout-btn-admin" data-logout>
+            <i class="fas fa-sign-out-alt"></i> Se déconnecter
+          </button>
+        </div>
+
+        <!-- Admin stats bar -->
+        <div class="metric-grid" data-admin-metrics>
+          <article class="metric-card">
+            <strong>—</strong><h3>Utilisateurs</h3><p>Comptes enregistrés</p>
+          </article>
+          <article class="metric-card">
+            <strong>—</strong><h3>Formations</h3><p>Programmes actifs</p>
+          </article>
+          <article class="metric-card">
+            <strong>—</strong><h3>Clubs</h3><p>Associations étudiantes</p>
+          </article>
+          <article class="metric-card">
+            <strong>—</strong><h3>Événements</h3><p>Activités planifiées</p>
+          </article>
+        </div>
+
+        <div class="portal-tabs" style="margin-top:2rem">
+          <button class="tab-btn active" data-tab="tab-formations-admin"><i class="fas fa-graduation-cap"></i> Formations</button>
+          <button class="tab-btn" data-tab="tab-clubs-admin"><i class="fas fa-users"></i> Clubs</button>
+          <button class="tab-btn" data-tab="tab-events-admin"><i class="fas fa-calendar"></i> Événements</button>
+          <button class="tab-btn" data-tab="tab-users-admin"><i class="fas fa-user-cog"></i> Utilisateurs</button>
+        </div>
+
+        <!-- Formations Admin -->
+        <div id="tab-formations-admin" class="tab-panel active">
+          <div class="crud-layout">
+            <div class="crud-table-section">
+              <h3 class="crud-title"><i class="fas fa-list"></i> Liste des formations</h3>
+              <div class="table-wrap" data-formations-table>
+                <div class="empty-state"><i class="fas fa-spinner fa-spin"></i> Chargement…</div>
+              </div>
+            </div>
+            <div class="crud-form-section">
+              <h3 class="crud-title"><i class="fas fa-plus-circle"></i> Ajouter une formation</h3>
+              <form class="form-shell" data-admin-form id="admin-form">
+                <div class="form-field">
+                  <label for="f-name">Intitulé de la formation</label>
+                  <input type="text" id="f-name" name="name" placeholder="ex: Licence Multimédia" required>
+                </div>
+                <div class="form-field">
+                  <label for="f-level">Niveau</label>
+                  <select id="f-level" name="level" required>
+                    <option value="">Choisir un niveau</option>
+                    <option value="Licence">Licence</option>
+                    <option value="Ingénieur">Ingénieur</option>
+                    <option value="Master">Master</option>
+                    <option value="Doctorat">Doctorat</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="f-desc">Description</label>
+                  <textarea id="f-desc" name="description" placeholder="Description courte du programme…" rows="3" required></textarea>
+                </div>
+                <button class="button" type="submit"><i class="fas fa-plus"></i> Ajouter</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Clubs Admin -->
+        <div id="tab-clubs-admin" class="tab-panel">
+          <div class="crud-layout">
+            <div class="crud-table-section">
+              <h3 class="crud-title"><i class="fas fa-list"></i> Liste des clubs</h3>
+              <div class="table-wrap" data-clubs-table>
+                <div class="empty-state"><i class="fas fa-spinner fa-spin"></i> Chargement…</div>
+              </div>
+            </div>
+            <div class="crud-form-section">
+              <h3 class="crud-title"><i class="fas fa-plus-circle"></i> Créer un club</h3>
+              <form class="form-shell" data-club-admin-form id="club-admin-form">
+                <div class="form-field">
+                  <label for="c-name">Nom du club</label>
+                  <input type="text" id="c-name" name="name" placeholder="ex: ATAST ISITCOM" required>
+                </div>
+                <div class="form-field">
+                  <label for="c-category">Catégorie</label>
+                  <input type="text" id="c-category" name="category" placeholder="ex: Technologies Avancées" required>
+                </div>
+                <div class="form-field">
+                  <label for="c-desc">Description</label>
+                  <textarea id="c-desc" name="desc" placeholder="Présentation du club…" rows="3" required></textarea>
+                </div>
+                <button class="button" type="submit"><i class="fas fa-plus"></i> Créer</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Events Admin -->
+        <div id="tab-events-admin" class="tab-panel">
+          <div class="crud-layout">
+            <div class="crud-table-section">
+              <h3 class="crud-title"><i class="fas fa-list"></i> Liste des événements</h3>
+              <div class="table-wrap" data-events-table>
+                <div class="empty-state"><i class="fas fa-spinner fa-spin"></i> Chargement…</div>
+              </div>
+            </div>
+            <div class="crud-form-section">
+              <h3 class="crud-title"><i class="fas fa-plus-circle"></i> Planifier un événement</h3>
+              <form class="form-shell" data-event-admin-form id="event-admin-form">
+                <div class="form-field">
+                  <label for="e-title">Titre</label>
+                  <input type="text" id="e-title" name="title" placeholder="ex: Nuit de l'Info 2026" required>
+                </div>
+                <div class="form-row">
+                  <div class="form-field">
+                    <label for="e-date">Date</label>
+                    <input type="date" id="e-date" name="date" required>
+                  </div>
+                  <div class="form-field">
+                    <label for="e-capacity">Capacité</label>
+                    <input type="number" id="e-capacity" name="capacity" placeholder="ex: 150" min="1" required>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-field">
+                    <label for="e-location">Lieu</label>
+                    <input type="text" id="e-location" name="location" placeholder="ex: Grand Amphi" required>
+                  </div>
+                  <div class="form-field">
+                    <label for="e-organizer">Organisateur</label>
+                    <input type="text" id="e-organizer" name="organizer" placeholder="ex: ATAST" required>
+                  </div>
+                </div>
+                <div class="form-field">
+                  <label for="e-desc">Description</label>
+                  <textarea id="e-desc" name="desc" placeholder="Description de l'événement…" rows="3" required></textarea>
+                </div>
+                <button class="button" type="submit"><i class="fas fa-plus"></i> Planifier</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Users Admin -->
+        <div id="tab-users-admin" class="tab-panel">
+          <h3 class="crud-title"><i class="fas fa-users-cog"></i> Utilisateurs inscrits</h3>
+          <div class="table-wrap" data-users-table>
+            <div class="empty-state"><i class="fas fa-spinner fa-spin"></i> Chargement…</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-shell">
+      <div>
+        <h3>ISITCOM</h3>
+        <p>Institut Supérieur d'Informatique et des Technologies de la Communication — Université de Sousse.</p>
+        <div class="footer-note">© 2026 ISITCOM · Tous droits réservés</div>
+      </div>
+      <div>
+        <h4>Navigation</h4>
+        <div class="footer-links">
+          <a href="formations.html">Formations</a>
+          <a href="campus.html">Campus & Clubs</a>
+          <a href="resources.html">Ressources</a>
+          <a href="events.html">Événements</a>
+        </div>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <div class="footer-links">
+          <span><i class="fas fa-map-marker-alt"></i> Route GP1, Hammam Sousse 4011</span>
+          <span><i class="fas fa-envelope"></i> contact@isitcom.rnu.tn</span>
+          <span><i class="fas fa-phone"></i> +216 73 000 000</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

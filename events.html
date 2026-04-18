@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Événements | ISITCOM — Université de Sousse</title>
+  <meta name="description" content="Agenda des événements académiques et culturels de l'ISITCOM : conférences, hackathons, journées portes ouvertes et compétitions étudiantes.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="events">
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html">
+        <img src="photo/logo.jpg" alt="Logo ISITCOM">
+        <div class="brand-mark">
+          <strong>ISITCOM</strong>
+          <span>Université de Sousse</span>
+        </div>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" data-nav-toggle><i class="fas fa-bars"></i></button>
+      <nav class="nav-links" data-nav-menu>
+        <a href="index.html" data-nav="home">Accueil</a>
+        <a href="formations.html" data-nav="formations">Formations</a>
+        <a href="campus.html" data-nav="campus">Campus</a>
+        <a href="resources.html" data-nav="resources">Ressources</a>
+        <a href="events.html" data-nav="events">Événements</a>
+      </nav>
+      <div class="nav-actions">
+        <span class="pill hide-mobile" data-auth-chip>Accès visiteur</span>
+        <a class="button" href="portal.html">Portail étudiant</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <section class="page-intro">
+      <div class="container">
+        <span class="eyebrow"><i class="fas fa-calendar-days"></i> Agenda académique</span>
+        <h1>Restez connecté à la vie du campus.</h1>
+        <p>Conférences, hackathons, compétitions, journées portes ouvertes et cérémonies — retrouvez tous les événements de l'ISITCOM dans un calendrier unifié.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container split-showcase">
+        <aside class="calendar-shell">
+          <div id="calendar"></div>
+        </aside>
+        <div class="events-list-col" data-events-grid></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-shell">
+      <div>
+        <h3>ISITCOM</h3>
+        <p>Institut Supérieur d'Informatique et des Technologies de la Communication — Université de Sousse.</p>
+        <div class="footer-note">© 2026 ISITCOM · Tous droits réservés</div>
+      </div>
+      <div>
+        <h4>Navigation</h4>
+        <div class="footer-links">
+          <a href="formations.html">Formations</a>
+          <a href="campus.html">Campus & Clubs</a>
+          <a href="resources.html">Ressources</a>
+          <a href="portal.html">Portail étudiant</a>
+        </div>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <div class="footer-links">
+          <span><i class="fas fa-map-marker-alt"></i> Route GP1, Hammam Sousse 4011</span>
+          <span><i class="fas fa-envelope"></i> contact@isitcom.rnu.tn</span>
+          <span><i class="fas fa-phone"></i> +216 73 000 000</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ressources Pédagogiques | ISITCOM — Université de Sousse</title>
+  <meta name="description" content="Accédez aux ressources pédagogiques de l'ISITCOM : cours par filière, examens corrigés, rapports PFE et guides académiques.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="resources">
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html">
+        <img src="photo/logo.jpg" alt="Logo ISITCOM">
+        <div class="brand-mark">
+          <strong>ISITCOM</strong>
+          <span>Université de Sousse</span>
+        </div>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" data-nav-toggle><i class="fas fa-bars"></i></button>
+      <nav class="nav-links" data-nav-menu>
+        <a href="index.html" data-nav="home">Accueil</a>
+        <a href="formations.html" data-nav="formations">Formations</a>
+        <a href="campus.html" data-nav="campus">Campus</a>
+        <a href="resources.html" data-nav="resources">Ressources</a>
+        <a href="events.html" data-nav="events">Événements</a>
+      </nav>
+      <div class="nav-actions">
+        <span class="pill hide-mobile" data-auth-chip>Accès visiteur</span>
+        <a class="button" href="portal.html">Portail étudiant</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <section class="page-intro">
+      <div class="container">
+        <span class="eyebrow"><i class="fas fa-book-open"></i> Bibliothèque numérique</span>
+        <h1>Toutes vos ressources académiques en un seul endroit.</h1>
+        <p>Cours détaillés, examens corrigés, rapports de PFE et guides pratiques — organisés par filière et accessibles à tous les étudiants de l'ISITCOM.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <h2>Cours par filière</h2>
+            <p>Retrouvez les supports de cours pour chaque module, classés par formation.</p>
+          </div>
+        </div>
+        <div class="toolbar">
+          <input type="search" id="course-search" placeholder="Rechercher un cours, un enseignant…" data-course-search>
+          <select id="course-filter" data-course-filter>
+            <option value="all">Toutes les filières</option>
+            <option value="Multimédia">Multimédia</option>
+            <option value="IoT">IoT</option>
+            <option value="Télécom">Télécom</option>
+          </select>
+          <button class="button-ghost" type="button" id="course-reset" data-course-reset>
+            <i class="fas fa-rotate-left"></i> Réinitialiser
+          </button>
+        </div>
+        <div class="resource-grid" data-course-grid></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <h2>Documents & bibliothèque</h2>
+            <p>Examens corrigés, rapports PFE et guides étudiants disponibles en téléchargement.</p>
+          </div>
+        </div>
+        <div class="resource-grid" data-resource-grid></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <h2>Accès rapide</h2>
+            <p>Liens utiles pour les étudiants de l'ISITCOM.</p>
+          </div>
+        </div>
+        <div class="grid-3">
+          <article class="content-card">
+            <span class="card-label"><i class="fas fa-id-card"></i> Étudiant</span>
+            <h3>Livret étudiant</h3>
+            <p>Règlement intérieur, calendrier universitaire, contacts administratifs et procédures d'inscription.</p>
+            <div class="hero-actions">
+              <a class="button-ghost" href="portal.html">Accéder via le portail</a>
+            </div>
+          </article>
+          <article class="content-card">
+            <span class="card-label"><i class="fas fa-file-pdf"></i> PFE</span>
+            <h3>Rapports de PFE</h3>
+            <p>Consultez les rapports de projets de fin d'études des promotions précédentes pour guider vos recherches.</p>
+            <div class="hero-actions">
+              <a class="button-ghost" href="portal.html">Accéder via le portail</a>
+            </div>
+          </article>
+          <article class="content-card">
+            <span class="card-label"><i class="fas fa-question-circle"></i> Aide</span>
+            <h3>Besoin d'assistance ?</h3>
+            <p>Contactez la scolarité ou votre enseignant référent pour toute question relative aux ressources pédagogiques.</p>
+            <div class="hero-actions">
+              <a class="button-ghost" href="mailto:contact@isitcom.rnu.tn">Contacter la scolarité</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-shell">
+      <div>
+        <h3>ISITCOM</h3>
+        <p>Institut Supérieur d'Informatique et des Technologies de la Communication — Université de Sousse.</p>
+        <div class="footer-note">© 2026 ISITCOM · Tous droits réservés</div>
+      </div>
+      <div>
+        <h4>Navigation</h4>
+        <div class="footer-links">
+          <a href="formations.html">Formations</a>
+          <a href="campus.html">Campus & Clubs</a>
+          <a href="events.html">Événements</a>
+          <a href="portal.html">Portail étudiant</a>
+        </div>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <div class="footer-links">
+          <span><i class="fas fa-map-marker-alt"></i> Route GP1, Hammam Sousse 4011</span>
+          <span><i class="fas fa-envelope"></i> contact@isitcom.rnu.tn</span>
+          <span><i class="fas fa-phone"></i> +216 73 000 000</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
