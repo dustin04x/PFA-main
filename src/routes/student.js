@@ -22,22 +22,31 @@ router.post("/events/:id/register", authRequired, async (req, res) => {
   const eventId = Number(req.params.id);
   const userId = req.auth.sub;
 
-  const event = await db.get("SELECT * FROM events WHERE id = ?", [eventId]);
-  if (!event) return res.status(404).json({ message: "Événement introuvable." });
-
   const existing = await db.get("SELECT id FROM eventRegistrations WHERE eventId = ? AND userId = ?", [eventId, userId]);
   if (existing) return res.status(409).json({ message: "Déjà inscrit." });
 
-  if (event.registered >= event.capacity) return res.status(400).json({ message: "Complet." });
+  try {
+    // Atomic update to prevent multi-threaded race conditions (overbooking)
+    const updateInfo = await db.run("UPDATE events SET registered = registered + 1 WHERE id = ? AND registered < capacity", [eventId]);
+    
+    if (updateInfo.changes === 0) {
+      const event = await db.get("SELECT capacity, registered FROM events WHERE id = ?", [eventId]);
+      if (!event) return res.status(404).json({ message: "Événement introuvable." });
+      return res.status(400).json({ message: "Complet." });
+    }
 
-  await db.run("UPDATE events SET registered = registered + 1 WHERE id = ?", [eventId]);
-  await db.run("INSERT INTO eventRegistrations (eventId, userId) VALUES (?, ?)", [eventId, userId]);
+    await db.run("INSERT INTO eventRegistrations (eventId, userId) VALUES (?, ?)", [eventId, userId]);
 
-  event.registered++; // Update logic for response to match old format
-  event.date = event.eventDate;
-  event.desc = event.description;
+    // Fetch updated event to return
+    const event = await db.get("SELECT * FROM events WHERE id = ?", [eventId]);
+    event.date = event.eventDate;
+    event.desc = event.description;
 
-  res.status(201).json({ message: `Inscription confirmée pour ${event.title}.`, event });
+    res.status(201).json({ message: `Inscription confirmée pour ${event.title}.`, event });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erreur serveur lors de l'inscription." });
+  }
 });
 
 router.get("/activity", authRequired, async (req, res) => {
@@ -47,11 +56,12 @@ router.get("/activity", authRequired, async (req, res) => {
 
   const clubs = await db.all("SELECT cm.status, c.id, c.name, c.category FROM clubMemberships cm JOIN clubs c ON c.id = cm.clubId WHERE cm.userId = ?", [userId]);
   const events = await db.all("SELECT e.id, e.title, e.eventDate as date, e.location FROM eventRegistrations er JOIN events e ON e.id = er.eventId WHERE er.userId = ?", [userId]);
+  const registrationInfo = await db.get("SELECT nom, prenom, classe, status FROM registrations WHERE userId = ?", [userId]);
 
   const formattedClubs = clubs.map(c => ({ status: c.status, club: { id: c.id, name: c.name, category: c.category } }));
   const formattedEvents = events.map(e => ({ event: e }));
 
-  res.json({ clubs: formattedClubs, events: formattedEvents });
+  res.json({ clubs: formattedClubs, events: formattedEvents, registrationInfo });
 });
 
 module.exports = router;

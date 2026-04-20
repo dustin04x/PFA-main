@@ -79,4 +79,54 @@ router.delete("/events/:id", async (req, res) => {
   res.json({ message: "Événement supprimé." });
 });
 
+// ─── ADMIN: DOSSIERS (REGISTRATIONS) ─────────────────────────────────
+router.get("/registrations", async (req, res) => {
+  const db = await getDb();
+  const registrations = await db.all("SELECT * FROM registrations ORDER BY createdAt DESC");
+  res.json({ registrations });
+});
+
+router.patch("/registrations/:id/status", async (req, res) => {
+  const { status } = req.body;
+  if (!status) return res.status(400).json({ message: "Statut requis." });
+  
+  const db = await getDb();
+  await db.run("UPDATE registrations SET status = ? WHERE id = ?", [status, req.params.id]);
+  res.json({ message: "Statut mis à jour." });
+});
+
+// ─── ADMIN: COURSES ──────────────────────────────────────────────────
+router.post("/courses", async (req, res) => {
+  const { title, formation, teacher, description } = req.body;
+  if (!title || !formation || !teacher || !description) return res.status(400).json({ message: "Champs requis." });
+
+  const db = await getDb();
+  const info = await db.run("INSERT INTO courses (title, formation, teacher, description) VALUES (?, ?, ?, ?)", [title, formation, teacher, description]);
+  const course = await db.get("SELECT * FROM courses WHERE id = ?", [info.lastID]);
+  res.status(201).json({ message: "Cours ajouté.", course });
+});
+
+router.delete("/courses/:id", async (req, res) => {
+  const db = await getDb();
+  await db.run("DELETE FROM courses WHERE id = ?", [req.params.id]);
+  res.json({ message: "Cours supprimé." });
+});
+
+// ─── ADMIN: RESOURCES ────────────────────────────────────────────────
+router.post("/resources", async (req, res) => {
+  const { title, type, formation, description } = req.body;
+  if (!title || !type || !formation || !description) return res.status(400).json({ message: "Champs requis." });
+
+  const db = await getDb();
+  const info = await db.run("INSERT INTO resources (title, type, formation, description) VALUES (?, ?, ?, ?)", [title, type, formation, description]);
+  const resource = await db.get("SELECT * FROM resources WHERE id = ?", [info.lastID]);
+  res.status(201).json({ message: "Ressource ajoutée.", resource });
+});
+
+router.delete("/resources/:id", async (req, res) => {
+  const db = await getDb();
+  await db.run("DELETE FROM resources WHERE id = ?", [req.params.id]);
+  res.json({ message: "Ressource supprimée." });
+});
+
 module.exports = router;

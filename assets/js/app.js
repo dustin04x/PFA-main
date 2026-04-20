@@ -7,6 +7,7 @@ const state = {
   events: [],
   courses: [],
   resources: [],
+  registrations: [],
   activity: { clubs: [], events: [] },
   allUsers: [],
   toastTimer: null
@@ -95,6 +96,37 @@ function setupTabs() {
   });
 }
 
+// ─── THEME ──────────────────────────────────────────────────────────────────
+
+function setupGlobalEvents() {
+  const themeToggle = document.querySelector('[data-theme-toggle]');
+  if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('isitcom-theme');
+  if (saved === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    const icon = document.querySelector('[data-theme-toggle] i');
+    if (icon) icon.className = 'fas fa-sun';
+  }
+}
+
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const icon = document.querySelector('[data-theme-toggle] i');
+  
+  if (isDark) {
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('isitcom-theme', 'light');
+    if (icon) icon.className = 'fas fa-moon';
+  } else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    localStorage.setItem('isitcom-theme', 'dark');
+    if (icon) icon.className = 'fas fa-sun';
+  }
+}
+
 // ─── AUTH CHIPS ───────────────────────────────────────────────────────────────
 
 function updateAuthChips() {
@@ -111,7 +143,6 @@ function updatePortalState() {
   const sectionStudent = qs("[data-section-student]");
   const sectionAdmin = qs("[data-section-admin]");
 
-  // Only run on portal page
   if (!sectionGuest) return;
 
   if (!state.user) {
@@ -206,7 +237,27 @@ function renderUserDashboard() {
           </div>
         </article>`).join("");
 
+  const regInfo = state.activity.registrationInfo;
+  const regWidget = regInfo 
+    ? `<div style="margin-bottom: 2rem;">
+        <h3 style="font-family:'Space Grotesk',sans-serif;margin:0 0 1rem;display:flex;align-items:center;gap:.5rem">
+          <i class="fas fa-folder-open"></i> Mon Dossier
+        </h3>
+        <article class="content-card" style="padding:1rem; border-left: 4px solid var(--brand);">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+            <div>
+              <span class="card-label">${regInfo.classe}</span>
+              <h3 style="margin:.4rem 0 0;font-size:1.05rem">${regInfo.prenom} ${regInfo.nom}</h3>
+            </div>
+            <span class="badge ${regInfo.status === 'Validé' ? 'badge-role-admin' : (regInfo.status === 'Rejeté' ? 'badge-status-full' : 'badge-level')}">
+              ${regInfo.status || 'En attente'}
+            </span>
+          </div>
+        </article>
+       </div>` : '';
+
   dashboard.innerHTML = `
+    ${regWidget}
     <div class="grid-2">
       <div>
         <h3 style="font-family:'Space Grotesk',sans-serif;margin:0 0 1rem;display:flex;align-items:center;gap:.5rem">
@@ -299,9 +350,12 @@ function renderHomeMetrics() {
   const u = qs("[data-stat-users]");
   const f = qs("[data-stat-formations]");
   const c = qs("[data-stat-clubs]");
-  if (f) f.textContent = formatCount(state.formations.length || 6);
-  if (c) c.textContent = formatCount(state.clubs.length || 4);
-  if (u) u.textContent = "1 800+";
+  if (f) f.setAttribute("data-stat-counter", state.formations.length || 6);
+  if (c) c.setAttribute("data-stat-counter", state.clubs.length || 4);
+  if (u) {
+    u.setAttribute("data-stat-counter", 1800);
+    u.dataset.suffix = "+";
+  }
 }
 
 function renderCourses() {
@@ -358,12 +412,14 @@ function renderCalendar() {
 
 async function loadAdminData() {
   try {
-    const [statsData, usersData] = await Promise.all([
+    const [statsData, usersData, regsData] = await Promise.all([
       apiRequest("/api/admin/overview"),
-      apiRequest("/api/admin/users")
+      apiRequest("/api/admin/users"),
+      apiRequest("/api/admin/registrations")
     ]);
     renderAdminMetrics(statsData.stats);
     state.allUsers = usersData.users;
+    state.registrations = regsData.registrations;
     renderAdminTables();
   } catch (e) {
     showToast("Erreur lors du chargement des données.", "danger");
@@ -394,8 +450,11 @@ function renderAdminMetrics(stats) {
 
 function renderAdminTables() {
   renderFormationsTable();
+  renderCoursesTable();
+  renderResourcesTable();
   renderClubsTable();
   renderEventsTable();
+  renderRegistrationsTable();
   renderUsersTable();
 }
 
@@ -514,6 +573,90 @@ function renderUsersTable() {
     </table>`;
 }
 
+function renderCoursesTable() {
+  const wrap = qs("[data-courses-table]");
+  if (!wrap) return;
+  if (!state.courses.length) {
+    wrap.innerHTML = `<div class="empty-state"><i class="fas fa-book"></i><span>Aucun cours enregistré.</span></div>`;
+    return;
+  }
+  wrap.innerHTML = `
+    <table class="data-table">
+      <thead><tr>
+        <th>Titre</th><th>Formation</th><th>Enseignant</th><th>Action</th>
+      </tr></thead>
+      <tbody>
+        ${state.courses.map(c => `
+          <tr>
+            <td><strong>${c.title}</strong></td>
+            <td><span class="badge badge-level">${c.formation}</span></td>
+            <td style="color:var(--muted)">${c.teacher}</td>
+            <td><button class="button-danger" data-delete-course="${c.id}">
+              <i class="fas fa-trash-alt"></i> Supprimer
+            </button></td>
+          </tr>`).join("")}
+      </tbody>
+    </table>`;
+}
+
+function renderResourcesTable() {
+  const wrap = qs("[data-resources-table]");
+  if (!wrap) return;
+  if (!state.resources.length) {
+    wrap.innerHTML = `<div class="empty-state"><i class="fas fa-file-alt"></i><span>Aucune ressource enregistrée.</span></div>`;
+    return;
+  }
+  wrap.innerHTML = `
+    <table class="data-table">
+      <thead><tr>
+        <th>Titre</th><th>Type</th><th>Formation</th><th>Action</th>
+      </tr></thead>
+      <tbody>
+        ${state.resources.map(r => `
+          <tr>
+            <td><strong>${r.title}</strong></td>
+            <td><span class="badge badge-category">${r.type}</span></td>
+            <td style="color:var(--muted)">${r.formation}</td>
+            <td><button class="button-danger" data-delete-resource="${r.id}">
+              <i class="fas fa-trash-alt"></i> Supprimer
+            </button></td>
+          </tr>`).join("")}
+      </tbody>
+    </table>`;
+}
+
+function renderRegistrationsTable() {
+  const wrap = qs("[data-registrations-table]");
+  if (!wrap) return;
+  if (!state.registrations || !state.registrations.length) {
+    wrap.innerHTML = `<div class="empty-state"><i class="fas fa-clipboard-check"></i><span>Aucun dossier en attente.</span></div>`;
+    return;
+  }
+  wrap.innerHTML = `
+    <table class="data-table">
+      <thead><tr>
+        <th>Étudiant</th><th>CIN</th><th>Formation</th><th>Statut</th><th>Action</th>
+      </tr></thead>
+      <tbody>
+        ${state.registrations.map(r => `
+          <tr>
+            <td><strong>${r.prenom} ${r.nom}</strong><br><small style="color:var(--muted)">${r.email}</small></td>
+            <td style="color:var(--muted)">${r.cin}</td>
+            <td>${r.classe}</td>
+            <td><span class="badge ${r.status === 'Validé' ? 'badge-role-admin' : (r.status === 'Rejeté' ? 'badge-status-full' : 'badge-level')}">${r.status || 'En attente'}</span></td>
+            <td>
+              ${(!r.status || r.status === 'En attente') ? `
+                <div style="display:flex;gap:0.5rem">
+                  <button class="button" style="padding:0.4rem 0.8rem;font-size:0.85rem;" data-status-reg="${r.id}" data-status="Validé"><i class="fas fa-check"></i></button>
+                  <button class="button-danger" style="padding:0.4rem 0.8rem;font-size:0.85rem;" data-status-reg="${r.id}" data-status="Rejeté"><i class="fas fa-times"></i></button>
+                </div>
+              ` : `<span style="color:var(--muted)">Traité</span>`}
+            </td>
+          </tr>`).join("")}
+      </tbody>
+    </table>`;
+}
+
 // ─── LOAD BACKEND DATA ────────────────────────────────────────────────────────
 
 async function loadBackendData() {
@@ -607,6 +750,43 @@ async function deleteEvent(id) {
   } catch (e) { showToast(e.message, "danger"); }
 }
 
+async function deleteCourse(id) {
+  if (!confirm("Supprimer ce cours définitivement ?")) return;
+  try {
+    await apiRequest(`/api/admin/courses/${id}`, { method: "DELETE" });
+    state.courses = state.courses.filter(c => c.id !== id);
+    renderCoursesTable();
+    renderCourses();
+    showToast("Cours supprimé.", "success");
+    loadAdminData();
+  } catch (e) { showToast(e.message, "danger"); }
+}
+
+async function deleteResource(id) {
+  if (!confirm("Supprimer cette ressource définitivement ?")) return;
+  try {
+    await apiRequest(`/api/admin/resources/${id}`, { method: "DELETE" });
+    state.resources = state.resources.filter(r => r.id !== id);
+    renderResourcesTable();
+    renderResources();
+    showToast("Ressource supprimée.", "success");
+    loadAdminData();
+  } catch (e) { showToast(e.message, "danger"); }
+}
+
+async function updateRegistrationStatus(id, status) {
+  try {
+    await apiRequest(`/api/admin/registrations/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status })
+    });
+    const reg = state.registrations.find(r => r.id === id);
+    if (reg) reg.status = status;
+    renderRegistrationsTable();
+    showToast(`Dossier ${status.toLowerCase()}.`, "success");
+  } catch (e) { showToast(e.message, "danger"); }
+}
+
 function setupDelegatedActions() {
   document.addEventListener("click", async e => {
     const joinBtn = e.target.closest("[data-club-join]");
@@ -623,6 +803,15 @@ function setupDelegatedActions() {
 
     const delEvent = e.target.closest("[data-delete-event]");
     if (delEvent) { await deleteEvent(Number(delEvent.dataset.deleteEvent)); return; }
+
+    const delCourse = e.target.closest("[data-delete-course]");
+    if (delCourse) { await deleteCourse(Number(delCourse.dataset.deleteCourse)); return; }
+
+    const delRes = e.target.closest("[data-delete-resource]");
+    if (delRes) { await deleteResource(Number(delRes.dataset.deleteResource)); return; }
+
+    const statusReg = e.target.closest("[data-status-reg]");
+    if (statusReg) { await updateRegistrationStatus(Number(statusReg.dataset.statusReg), statusReg.dataset.status); return; }
 
     const logoutBtn = e.target.closest("[data-logout]");
     if (logoutBtn) {
@@ -642,6 +831,8 @@ function setupPortalForms() {
   const adminForm = qs("[data-admin-form]");
   const clubAdminForm = qs("[data-club-admin-form]");
   const eventAdminForm = qs("[data-event-admin-form]");
+  const courseAdminForm = qs("[data-course-admin-form]");
+  const resourceAdminForm = qs("[data-resource-admin-form]");
 
   loginForm?.addEventListener("submit", async e => {
     e.preventDefault();
@@ -744,7 +935,41 @@ function setupPortalForms() {
       renderEventCards(qsa("[data-events-grid]"), 0);
       renderEventCards(qsa("[data-events-preview]"), 3);
       renderCalendar();
-      showToast("Événement ajouté.", "success");
+      showToast("Événement planifié.", "success");
+      loadAdminData();
+    } catch (e) { showToast(e.message, "danger"); }
+  });
+
+  courseAdminForm?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const fd = new FormData(courseAdminForm);
+    try {
+      const data = await apiRequest("/api/admin/courses", {
+        method: "POST",
+        body: JSON.stringify({ title: fd.get("title"), formation: fd.get("formation"), teacher: fd.get("teacher"), description: fd.get("description") })
+      });
+      state.courses.push(data.course);
+      courseAdminForm.reset();
+      renderCoursesTable();
+      renderCourses();
+      showToast("Cours ajouté.", "success");
+      loadAdminData();
+    } catch (e) { showToast(e.message, "danger"); }
+  });
+
+  resourceAdminForm?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const fd = new FormData(resourceAdminForm);
+    try {
+      const data = await apiRequest("/api/admin/resources", {
+        method: "POST",
+        body: JSON.stringify({ title: fd.get("title"), type: fd.get("type"), formation: fd.get("formation"), description: fd.get("description") })
+      });
+      state.resources.push(data.resource);
+      resourceAdminForm.reset();
+      renderResourcesTable();
+      renderResources();
+      showToast("Ressource ajoutée.", "success");
       loadAdminData();
     } catch (e) { showToast(e.message, "danger"); }
   });
@@ -764,9 +989,136 @@ function setupCourseFilters() {
   });
 }
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
+// ─── INIT & ANIMATIONS ────────────────────────────────────────────────────────
+
+function injectGlobalUI() {
+  const navActions = document.querySelector('.nav-actions');
+  if (navActions && !document.querySelector('.theme-toggle')) {
+    const html = `
+      <button class="action-icon-btn theme-toggle" type="button" aria-label="Basculer le thème" data-theme-toggle>
+        <i class="fas fa-moon"></i>
+      </button>
+    `;
+    navActions.insertAdjacentHTML('afterbegin', html);
+  }
+}
+
+function renderSkeletons() {
+  const formationHtml = '<article class="skeleton-card"><div class="skeleton skeleton-text short"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text"></div></article>'.repeat(3);
+  qsa("[data-formations-grid]").forEach(t => t.innerHTML = formationHtml);
+  
+  const clubHtml = '<article class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text short"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text"></div></article>'.repeat(3);
+  qsa("[data-clubs-grid], [data-clubs-preview]").forEach(t => t.innerHTML = clubHtml);
+  
+  const eventHtml = '<article class="skeleton-card"><div class="skeleton skeleton-text short"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text"></div></article>'.repeat(3);
+  qsa("[data-events-grid], [data-events-preview]").forEach(t => t.innerHTML = eventHtml);
+}
+
+function setupScrollAnimations() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("is-visible");
+        
+        if (entry.target.hasAttribute("data-stat-counter") && !entry.target.dataset.animated) {
+          entry.target.dataset.animated = "true";
+          const targetNum = parseInt(entry.target.getAttribute("data-stat-counter"), 10);
+          if (!isNaN(targetNum)) {
+            animateCounter(entry.target, targetNum, 2000);
+          }
+        }
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+
+  qsa("[data-animate], [data-stat-counter]").forEach((el, i) => {
+    // Add staggered delay based on index for grid items
+    if (el.parentElement.classList.contains('grid-3') || el.parentElement.classList.contains('grid-2')) {
+      el.style.transitionDelay = `${(i % 3) * 0.1}s`;
+    }
+    observer.observe(el);
+  });
+}
+
+function setupMagneticButtons() {
+  const buttons = qsa('.button, .button-secondary, .brand');
+  buttons.forEach(btn => {
+    btn.addEventListener('mousemove', e => {
+      const rect = btn.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      
+      btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
+    });
+    
+    btn.addEventListener('mouseleave', () => {
+      btn.style.transform = '';
+    });
+  });
+}
+
+function setupCardTilt() {
+  const cards = qsa('.content-card, .spotlight-card, .panel-art');
+  cards.forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      card.style.setProperty('--mouse-x', `${x}px`);
+      card.style.setProperty('--mouse-y', `${y}px`);
+
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      
+      const rotateX = (y - centerY) / 20;
+      const rotateY = (centerX - x) / 20;
+      
+      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-5px)`;
+    });
+    
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+    });
+  });
+}
+
+function setupReadingProgress() {
+  const bar = document.createElement('div');
+  bar.className = 'reading-progress-bar';
+  document.body.appendChild(bar);
+  
+  window.addEventListener('scroll', () => {
+    const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+    const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const scrolled = (winScroll / height) * 100;
+    bar.style.width = scrolled + "%";
+  });
+}
+
+function animateCounter(el, target, duration) {
+  let startTimestamp = null;
+  const step = (timestamp) => {
+    if (!startTimestamp) startTimestamp = timestamp;
+    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+    const easeProgress = progress * (2 - progress);
+    const currentNum = Math.floor(easeProgress * target);
+    el.textContent = formatCount(currentNum) + (el.dataset.suffix || "");
+    if (progress < 1) {
+      window.requestAnimationFrame(step);
+    } else {
+      el.textContent = formatCount(target) + (el.dataset.suffix || "");
+    }
+  };
+  window.requestAnimationFrame(step);
+}
 
 async function initialize() {
+  injectGlobalUI();
+  setupGlobalEvents();
+  initTheme();
+  
   setupNavigation();
   setupTabs();
   setupCourseFilters();
@@ -774,12 +1126,25 @@ async function initialize() {
   setupPortalForms();
   await hydrateSession();
   try {
+    renderSkeletons();
+    
+    // Reduce artificial delay to make UI snappier, keeping skeleton layout smooth
+    await new Promise(r => setTimeout(r, 200));
+
     await loadBackendData();
     renderPageData();
     renderCalendar();
   } catch (e) {
     console.error("Erreur de chargement:", e);
     showToast("Impossible de contacter le serveur.", "danger");
+  } finally {
+    setupScrollAnimations();
+    setupMagneticButtons();
+    setupCardTilt();
+    setupReadingProgress();
+    setupCustomCursor();
+    setupHeroParallax();
+    setupPageTransitions();
   }
 }
 

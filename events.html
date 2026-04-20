@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Événements | ISITCOM — Université de Sousse</title>
   <meta name="description" content="Agenda des événements académiques et culturels de l'ISITCOM : conférences, hackathons, journées portes ouvertes et compétitions étudiantes.">
+  <meta property="og:title" content="Événements | ISITCOM — Université de Sousse">
+  <meta property="og:description" content="Agenda des événements académiques et culturels de l'ISITCOM : conférences, hackathons, journées portes ouvertes.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://isitcom.rnu.tn/events.html">
+  <meta property="og:image" content="https://isitcom.rnu.tn/photo/logo.jpg">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -22,8 +28,8 @@
           <span>Université de Sousse</span>
         </div>
       </a>
-      <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" data-nav-toggle><i class="fas fa-bars"></i></button>
-      <nav class="nav-links" data-nav-menu>
+      <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false" data-nav-toggle><i class="fas fa-bars"></i></button>
+      <nav class="nav-links" aria-label="Navigation Principale" data-nav-menu>
         <a href="index.html" data-nav="home">Accueil</a>
         <a href="formations.html" data-nav="formations">Formations</a>
         <a href="campus.html" data-nav="campus">Campus</a>
@@ -39,7 +45,7 @@
 
   <main class="page-main">
     <section class="page-intro">
-      <div class="container">
+      <div class="container" data-animate="fade-up">
         <span class="eyebrow"><i class="fas fa-calendar-days"></i> Agenda académique</span>
         <h1>Restez connecté à la vie du campus.</h1>
         <p>Conférences, hackathons, compétitions, journées portes ouvertes et cérémonies — retrouvez tous les événements de l'ISITCOM dans un calendrier unifié.</p>
@@ -48,7 +54,7 @@
 
     <section class="section">
       <div class="container split-showcase">
-        <aside class="calendar-shell">
+        <aside class="calendar-shell" data-animate="fade-up">
           <div id="calendar"></div>
         </aside>
         <div class="events-list-col" data-events-grid></div>

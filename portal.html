@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portail Étudiant | ISITCOM — Université de Sousse</title>
   <meta name="description" content="Portail étudiant de l'ISITCOM : connexion, inscription, tableau de bord personnel et administration.">
+  <meta property="og:title" content="Portail Étudiant | ISITCOM">
+  <meta property="og:description" content="Portail étudiant de l'ISITCOM : connexion, inscription, tableau de bord personnel.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://isitcom.rnu.tn/portal.html">
+  <meta property="og:image" content="https://isitcom.rnu.tn/photo/logo.jpg">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,8 +27,8 @@
           <span>Université de Sousse</span>
         </div>
       </a>
-      <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" data-nav-toggle><i class="fas fa-bars"></i></button>
-      <nav class="nav-links" data-nav-menu>
+      <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false" data-nav-toggle><i class="fas fa-bars"></i></button>
+      <nav class="nav-links" aria-label="Navigation Principale" data-nav-menu>
         <a href="index.html" data-nav="home">Accueil</a>
         <a href="formations.html" data-nav="formations">Formations</a>
         <a href="campus.html" data-nav="campus">Campus</a>
@@ -38,7 +44,7 @@
 
   <main class="page-main">
     <section class="page-intro">
-      <div class="container">
+      <div class="container" data-animate="fade-up">
         <span class="eyebrow"><i class="fas fa-user-shield"></i> Espace personnel</span>
         <h1>Portail étudiant ISITCOM.</h1>
         <p>Connectez-vous pour accéder à votre tableau de bord, vous inscrire à des clubs et des événements, et gérer votre dossier académique.</p>
@@ -48,7 +54,7 @@
     <!-- AUTH SECTION: shown when NOT logged in -->
     <section class="section" id="section-auth" data-section-guest>
       <div class="container portal-grid">
-        <article class="auth-card">
+        <article class="auth-card" data-animate="fade-up">
           <span class="card-label"><i class="fas fa-sign-in-alt"></i> Connexion</span>
           <h3>Accéder à mon espace</h3>
           <form data-login-form id="login-form">
@@ -64,7 +70,7 @@
           </form>
         </article>
 
-        <article class="auth-card">
+        <article class="auth-card" data-animate="fade-up">
           <span class="card-label"><i class="fas fa-user-plus"></i> Inscription</span>
           <h3>Créer un compte</h3>
           <form data-register-form id="register-form">
@@ -179,8 +185,11 @@
 
         <div class="portal-tabs" style="margin-top:2rem">
           <button class="tab-btn active" data-tab="tab-formations-admin"><i class="fas fa-graduation-cap"></i> Formations</button>
+          <button class="tab-btn" data-tab="tab-courses-admin"><i class="fas fa-book"></i> Cours</button>
+          <button class="tab-btn" data-tab="tab-resources-admin"><i class="fas fa-file-alt"></i> Ressources</button>
           <button class="tab-btn" data-tab="tab-clubs-admin"><i class="fas fa-users"></i> Clubs</button>
           <button class="tab-btn" data-tab="tab-events-admin"><i class="fas fa-calendar"></i> Événements</button>
+          <button class="tab-btn" data-tab="tab-registrations-admin"><i class="fas fa-clipboard-list"></i> Dossiers</button>
           <button class="tab-btn" data-tab="tab-users-admin"><i class="fas fa-user-cog"></i> Utilisateurs</button>
         </div>
 
@@ -217,6 +226,88 @@
                 <button class="button" type="submit"><i class="fas fa-plus"></i> Ajouter</button>
               </form>
             </div>
+          </div>
+        </div>
+
+        <!-- Courses Admin -->
+        <div id="tab-courses-admin" class="tab-panel">
+          <div class="crud-layout">
+            <div class="crud-table-section">
+              <h3 class="crud-title"><i class="fas fa-list"></i> Liste des cours</h3>
+              <div class="table-wrap" data-courses-table>
+                <div class="empty-state"><i class="fas fa-spinner fa-spin"></i> Chargement…</div>
+              </div>
+            </div>
+            <div class="crud-form-section">
+              <h3 class="crud-title"><i class="fas fa-plus-circle"></i> Ajouter un cours</h3>
+              <form class="form-shell" data-course-admin-form id="course-admin-form">
+                <div class="form-field">
+                  <label for="cr-title">Titre du cours</label>
+                  <input type="text" id="cr-title" name="title" placeholder="ex: Développement Front-End" required>
+                </div>
+                <div class="form-field">
+                  <label for="cr-form">Formation cible</label>
+                  <input type="text" id="cr-form" name="formation" placeholder="ex: Multimédia" required>
+                </div>
+                <div class="form-field">
+                  <label for="cr-teacher">Enseignant</label>
+                  <input type="text" id="cr-teacher" name="teacher" placeholder="ex: Dr. Ben Ali" required>
+                </div>
+                <div class="form-field">
+                  <label for="cr-desc">Description</label>
+                  <textarea id="cr-desc" name="description" placeholder="Objectifs du cours…" rows="3" required></textarea>
+                </div>
+                <button class="button" type="submit"><i class="fas fa-plus"></i> Ajouter</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resources Admin -->
+        <div id="tab-resources-admin" class="tab-panel">
+          <div class="crud-layout">
+            <div class="crud-table-section">
+              <h3 class="crud-title"><i class="fas fa-list"></i> Liste des ressources</h3>
+              <div class="table-wrap" data-resources-table>
+                <div class="empty-state"><i class="fas fa-spinner fa-spin"></i> Chargement…</div>
+              </div>
+            </div>
+            <div class="crud-form-section">
+              <h3 class="crud-title"><i class="fas fa-plus-circle"></i> Ajouter une ressource</h3>
+              <form class="form-shell" data-resource-admin-form id="resource-admin-form">
+                <div class="form-field">
+                  <label for="r-title">Titre de la ressource</label>
+                  <input type="text" id="r-title" name="title" placeholder="ex: Cours React Complet" required>
+                </div>
+                <div class="form-field">
+                  <label for="r-type">Type</label>
+                  <select id="r-type" name="type" required>
+                    <option value="">Choisir un type</option>
+                    <option value="Cours">Cours</option>
+                    <option value="Examen">Examen</option>
+                    <option value="PFE">PFE</option>
+                    <option value="Guide">Guide</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="r-form">Formation</label>
+                  <input type="text" id="r-form" name="formation" placeholder="ex: Multimédia ou Général" required>
+                </div>
+                <div class="form-field">
+                  <label for="r-desc">Description</label>
+                  <textarea id="r-desc" name="description" placeholder="Description courte…" rows="3" required></textarea>
+                </div>
+                <button class="button" type="submit"><i class="fas fa-plus"></i> Ajouter</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Registrations Admin -->
+        <div id="tab-registrations-admin" class="tab-panel">
+          <h3 class="crud-title"><i class="fas fa-folder-open"></i> Dossiers d'inscription</h3>
+          <div class="table-wrap" data-registrations-table>
+            <div class="empty-state"><i class="fas fa-spinner fa-spin"></i> Chargement…</div>
           </div>
         </div>
 

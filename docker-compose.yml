@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: isitcom-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: isitcom_admin
+      POSTGRES_PASSWORD: isitcom_secure_password
+      POSTGRES_DB: isitcom_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: isitcom-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - POSTGRES_USER=isitcom_admin
+      - POSTGRES_PASSWORD=isitcom_secure_password
+      - POSTGRES_DB=isitcom_db
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - JWT_SECRET=change-this-secret-in-production
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:

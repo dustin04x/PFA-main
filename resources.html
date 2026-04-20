@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ressources Pédagogiques | ISITCOM — Université de Sousse</title>
   <meta name="description" content="Accédez aux ressources pédagogiques de l'ISITCOM : cours par filière, examens corrigés, rapports PFE et guides académiques.">
+  <meta property="og:title" content="Ressources Pédagogiques | ISITCOM">
+  <meta property="og:description" content="Accédez aux ressources pédagogiques : cours, examens corrigés, PFE.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://isitcom.rnu.tn/resources.html">
+  <meta property="og:image" content="https://isitcom.rnu.tn/photo/logo.jpg">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,8 +27,8 @@
           <span>Université de Sousse</span>
         </div>
       </a>
-      <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" data-nav-toggle><i class="fas fa-bars"></i></button>
-      <nav class="nav-links" data-nav-menu>
+      <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false" data-nav-toggle><i class="fas fa-bars"></i></button>
+      <nav class="nav-links" aria-label="Navigation Principale" data-nav-menu>
         <a href="index.html" data-nav="home">Accueil</a>
         <a href="formations.html" data-nav="formations">Formations</a>
         <a href="campus.html" data-nav="campus">Campus</a>
@@ -38,7 +44,7 @@
 
   <main class="page-main">
     <section class="page-intro">
-      <div class="container">
+      <div class="container" data-animate="fade-up">
         <span class="eyebrow"><i class="fas fa-book-open"></i> Bibliothèque numérique</span>
         <h1>Toutes vos ressources académiques en un seul endroit.</h1>
         <p>Cours détaillés, examens corrigés, rapports de PFE et guides pratiques — organisés par filière et accessibles à tous les étudiants de l'ISITCOM.</p>
@@ -46,7 +52,7 @@
     </section>
 
     <section class="section">
-      <div class="container">
+      <div class="container" data-animate="fade-up">
         <div class="section-header">
           <div>
             <h2>Cours par filière</h2>
@@ -70,7 +76,7 @@
     </section>
 
     <section class="section">
-      <div class="container">
+      <div class="container" data-animate="fade-up">
         <div class="section-header">
           <div>
             <h2>Documents & bibliothèque</h2>
@@ -82,7 +88,7 @@
     </section>
 
     <section class="section">
-      <div class="container">
+      <div class="container" data-animate="fade-up">
         <div class="section-header">
           <div>
             <h2>Accès rapide</h2>
@@ -90,7 +96,7 @@
           </div>
         </div>
         <div class="grid-3">
-          <article class="content-card">
+          <article class="content-card" data-animate="fade-up">
             <span class="card-label"><i class="fas fa-id-card"></i> Étudiant</span>
             <h3>Livret étudiant</h3>
             <p>Règlement intérieur, calendrier universitaire, contacts administratifs et procédures d'inscription.</p>
@@ -98,7 +104,7 @@
               <a class="button-ghost" href="portal.html">Accéder via le portail</a>
             </div>
           </article>
-          <article class="content-card">
+          <article class="content-card" data-animate="fade-up">
             <span class="card-label"><i class="fas fa-file-pdf"></i> PFE</span>
             <h3>Rapports de PFE</h3>
             <p>Consultez les rapports de projets de fin d'études des promotions précédentes pour guider vos recherches.</p>
@@ -106,7 +112,7 @@
               <a class="button-ghost" href="portal.html">Accéder via le portail</a>
             </div>
           </article>
-          <article class="content-card">
+          <article class="content-card" data-animate="fade-up">
             <span class="card-label"><i class="fas fa-question-circle"></i> Aide</span>
             <h3>Besoin d'assistance ?</h3>
             <p>Contactez la scolarité ou votre enseignant référent pour toute question relative aux ressources pédagogiques.</p>

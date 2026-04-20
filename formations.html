@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Formations | ISITCOM — Université de Sousse</title>
   <meta name="description" content="Découvrez les programmes académiques de l'ISITCOM : licences appliquées, cycle ingénieur, master et doctorat en informatique et télécommunications.">
+  <meta property="og:title" content="Formations | ISITCOM — Université de Sousse">
+  <meta property="og:description" content="Découvrez les programmes académiques de l'ISITCOM : licences appliquées, cycle ingénieur, master et doctorat.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://isitcom.rnu.tn/formations.html">
+  <meta property="og:image" content="https://isitcom.rnu.tn/photo/logo.jpg">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,8 +27,8 @@
           <span>Université de Sousse</span>
         </div>
       </a>
-      <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" data-nav-toggle><i class="fas fa-bars"></i></button>
-      <nav class="nav-links" data-nav-menu>
+      <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false" data-nav-toggle><i class="fas fa-bars"></i></button>
+      <nav class="nav-links" aria-label="Navigation Principale" data-nav-menu>
         <a href="index.html" data-nav="home">Accueil</a>
         <a href="formations.html" data-nav="formations">Formations</a>
         <a href="campus.html" data-nav="campus">Campus</a>
@@ -38,7 +44,7 @@
 
   <main class="page-main">
     <section class="page-intro">
-      <div class="container">
+      <div class="container" data-animate="fade-up">
         <span class="eyebrow"><i class="fas fa-graduation-cap"></i> Offre de formation</span>
         <h1>Des parcours académiques adaptés à chaque ambition.</h1>
         <p>L'ISITCOM propose six programmes du niveau licence au doctorat, couvrant les domaines porteurs de l'informatique, du multimédia, de l'IoT et des télécommunications.</p>
@@ -48,17 +54,17 @@
     <section class="section">
       <div class="container">
         <div class="metric-grid">
-          <article class="metric-card">
+          <article class="metric-card" data-animate="fade-up">
             <strong>3</strong>
             <h3>Licences appliquées</h3>
             <p>Multimédia, IoT et Télécommunications — des cursus professionnalisants en 3 ans.</p>
           </article>
-          <article class="metric-card">
+          <article class="metric-card" data-animate="fade-up">
             <strong>1</strong>
             <h3>Cycle ingénieur</h3>
             <p>Un parcours d'excellence en 5 ans orienté architecture réseau, cloud et IA.</p>
           </article>
-          <article class="metric-card">
+          <article class="metric-card" data-animate="fade-up">
             <strong>2+</strong>
             <h3>Masters & doctorat</h3>
             <p>Des spécialisations avancées et une filière recherche pour aller plus loin.</p>
@@ -69,7 +75,7 @@
 
     <section class="section">
       <div class="container">
-        <div class="section-header">
+        <div class="section-header" data-animate="fade-up">
           <div>
             <h2>Catalogue des programmes</h2>
             <p>Tous les cursus proposés par l'ISITCOM pour l'année universitaire 2025–2026.</p>
@@ -81,16 +87,16 @@
 
     <section class="section">
       <div class="container split-showcase">
-        <aside class="panel-art">
+        <aside class="panel-art" data-animate="fade-up">
           <div>
             <span class="eyebrow"><i class="fas fa-lightbulb"></i> Pédagogie</span>
             <h2>Apprendre par la pratique et par les projets.</h2>
             <p>Chaque programme intègre des travaux pratiques en laboratoire, des projets tutorés et un stage de fin d'études en entreprise, garantissant une insertion professionnelle rapide.</p>
           </div>
-          <img src="photo/info.png" alt="Salle de travaux pratiques ISITCOM">
+          <img src="photo/info.png" alt="Salle de travaux pratiques ISITCOM" loading="lazy">
         </aside>
         <div class="grid-2">
-          <article class="content-card">
+          <article class="content-card" data-animate="fade-up">
             <span class="card-label">Licence</span>
             <h3>Formation professionnalisante</h3>
             <p>Trois ans d'études combinant théorie et pratique, débouchant sur le marché du travail ou sur la poursuite en cycle ingénieur.</p>
@@ -100,7 +106,7 @@
               <li>Licence Réseaux & Télécommunications</li>
             </ul>
           </article>
-          <article class="content-card">
+          <article class="content-card" data-animate="fade-up">
             <span class="card-label">Ingénieur</span>
             <h3>Cycle ingénieur 5 ans</h3>
             <p>Architecture réseau, cloud computing, intelligence artificielle et cybersécurité — une formation qui répond aux besoins des grandes entreprises.</p>
@@ -110,12 +116,12 @@
               <li>Intelligence artificielle</li>
             </ul>
           </article>
-          <article class="content-card">
+          <article class="content-card" data-animate="fade-up">
             <span class="card-label">Master</span>
             <h3>Spécialisation avancée</h3>
             <p>Des masters de recherche et professionnels en cybersécurité, web multimédia et analyse de données, en lien avec les laboratoires de l'université.</p>
           </article>
-          <article class="content-card">
+          <article class="content-card" data-animate="fade-up">
             <span class="card-label">Doctorat</span>
             <h3>Recherche scientifique</h3>
             <p>Une filière doctorale active dans les domaines de l'IA, de l'IoT, de la cybersécurité et des réseaux avancés, intégrée aux unités de recherche de l'Université de Sousse.</p>
@@ -126,24 +132,24 @@
 
     <section class="section">
       <div class="container">
-        <div class="section-header">
+        <div class="section-header" data-animate="fade-up">
           <div>
             <h2>Conditions d'admission</h2>
             <p>Conditions générales d'accès aux formations de l'ISITCOM.</p>
           </div>
         </div>
         <div class="grid-3">
-          <article class="content-card">
+          <article class="content-card" data-animate="fade-up">
             <span class="card-label">Licence</span>
             <h3>Baccalauréat technologique</h3>
             <p>Accès sur dossier après le bac. Les bacheliers en sciences ou technologie sont prioritaires selon les filières.</p>
           </article>
-          <article class="content-card">
+          <article class="content-card" data-animate="fade-up">
             <span class="card-label">Cycle Ingénieur</span>
             <h3>Prépa intégrée ou concours</h3>
             <p>Accès via la préparatoire intégrée de l'ISITCOM ou par concours national après 2 ans de prépa.</p>
           </article>
-          <article class="content-card">
+          <article class="content-card" data-animate="fade-up">
             <span class="card-label">Master / Doctorat</span>
             <h3>Dossier académique</h3>
             <p>Admission sur dossier pour les titulaires d'une licence ou d'un master dans les spécialités concernées.</p>

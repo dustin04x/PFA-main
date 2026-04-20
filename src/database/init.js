@@ -7,23 +7,23 @@ async function initializeDatabase() {
   // Create tables
   await db.exec(`
     CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       fullName TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
       passwordHash TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'student',
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS formations (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       level TEXT NOT NULL,
       description TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS clubs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       category TEXT NOT NULL,
       img TEXT,
@@ -32,24 +32,24 @@ async function initializeDatabase() {
     );
 
     CREATE TABLE IF NOT EXISTS clubAchievements (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       clubId INTEGER NOT NULL,
       achievement TEXT NOT NULL,
       FOREIGN KEY(clubId) REFERENCES clubs(id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS clubMemberships (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       clubId INTEGER NOT NULL,
       userId INTEGER NOT NULL,
       status TEXT DEFAULT 'pending',
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(clubId) REFERENCES clubs(id) ON DELETE CASCADE,
       FOREIGN KEY(userId) REFERENCES users(id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS events (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       title TEXT NOT NULL,
       eventDate TEXT NOT NULL,
       location TEXT NOT NULL,
@@ -60,28 +60,29 @@ async function initializeDatabase() {
     );
 
     CREATE TABLE IF NOT EXISTS eventRegistrations (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       eventId INTEGER NOT NULL,
       userId INTEGER NOT NULL,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(eventId) REFERENCES events(id) ON DELETE CASCADE,
       FOREIGN KEY(userId) REFERENCES users(id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS registrations (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       userId INTEGER,
       nom TEXT NOT NULL,
       prenom TEXT NOT NULL,
       cin TEXT UNIQUE NOT NULL,
       classe TEXT NOT NULL,
       email TEXT NOT NULL,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      status TEXT DEFAULT 'En attente',
+      createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(userId) REFERENCES users(id) ON DELETE SET NULL
     );
 
     CREATE TABLE IF NOT EXISTS courses (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       title TEXT NOT NULL,
       formation TEXT NOT NULL,
       teacher TEXT NOT NULL,
@@ -89,13 +90,21 @@ async function initializeDatabase() {
     );
 
     CREATE TABLE IF NOT EXISTS resources (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       title TEXT NOT NULL,
       type TEXT NOT NULL,
       formation TEXT NOT NULL,
       description TEXT NOT NULL
     );
   `);
+
+  // Migrate registrations to include status
+  // Migrate registrations to include status (PostgreSQL handles IF NOT EXISTS or specific error codes better, but we starting fresh here)
+  try {
+    await db.exec(`ALTER TABLE registrations ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'En attente';`);
+  } catch (e) {
+    // Ignore if already exists (Postgres 9.6+ supports IF NOT EXISTS for some ALTER, but for columns we usually check catalogs)
+  }
 
   // Seed Admin User
   const adminUser = await db.get("SELECT id FROM users WHERE email = 'admin@isitcom.rnu.tn'");
@@ -185,7 +194,7 @@ async function initializeDatabase() {
     }
   }
 
-  console.log("Base de données SQLite initialisée avec succès !");
+  console.log("Base de données PostgreSQL initialisée avec succès !");
 }
 
 module.exports = { initializeDatabase };

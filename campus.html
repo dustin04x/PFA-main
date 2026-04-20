@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Campus & Vie Étudiante | ISITCOM — Université de Sousse</title>
   <meta name="description" content="Découvrez le campus de l'ISITCOM : laboratoires modernes, clubs étudiants, infrastructures et vie associative à Hammam Sousse.">
+  <meta property="og:title" content="Campus & Vie Étudiante | ISITCOM">
+  <meta property="og:description" content="Découvrez le campus de l'ISITCOM : laboratoires modernes, clubs étudiants, infrastructures et vie universitaire.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://isitcom.rnu.tn/campus.html">
+  <meta property="og:image" content="https://isitcom.rnu.tn/photo/logo.jpg">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,8 +27,8 @@
           <span>Université de Sousse</span>
         </div>
       </a>
-      <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" data-nav-toggle><i class="fas fa-bars"></i></button>
-      <nav class="nav-links" data-nav-menu>
+      <button class="nav-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false" data-nav-toggle><i class="fas fa-bars"></i></button>
+      <nav class="nav-links" aria-label="Navigation Principale" data-nav-menu>
         <a href="index.html" data-nav="home">Accueil</a>
         <a href="formations.html" data-nav="formations">Formations</a>
         <a href="campus.html" data-nav="campus">Campus</a>
@@ -38,7 +44,7 @@
 
   <main class="page-main">
     <section class="page-intro">
-      <div class="container">
+      <div class="container" data-animate="fade-up">
         <span class="eyebrow"><i class="fas fa-campus"></i> Vie étudiante</span>
         <h1>Un campus moderne au service de votre réussite.</h1>
         <p>Situé à Hammam Sousse, le campus de l'ISITCOM offre un environnement d'apprentissage stimulant : laboratoires équipés, espaces de travail collaboratif et une vie associative dynamique.</p>
@@ -47,23 +53,23 @@
 
     <section class="section">
       <div class="container split-showcase">
-        <aside class="panel-art">
+        <aside class="panel-art" data-animate="fade-up">
           <div>
             <span class="eyebrow"><i class="fas fa-building"></i> Nos infrastructures</span>
             <h2>Des équipements à la hauteur des ambitions.</h2>
             <p>L'ISITCOM investit continuellement dans la modernisation de ses espaces pédagogiques pour offrir aux étudiants les meilleures conditions de formation et de recherche.</p>
           </div>
-          <img src="photo/face.jpg" alt="Campus ISITCOM vue extérieure">
+          <img src="photo/face.jpg" alt="Campus ISITCOM vue extérieure" loading="lazy">
         </aside>
         <div class="grid-2">
-          <article class="content-card">
-            <img src="photo/fac2.jpg" alt="Bâtiment ISITCOM">
+          <article class="content-card" data-animate="fade-up">
+            <img src="photo/fac2.jpg" alt="Bâtiment ISITCOM" loading="lazy">
             <span class="card-label">Campus</span>
             <h3>Un cadre de vie agréable</h3>
             <p>Des espaces verts, une cafétéria, une bibliothèque et des salles de détente pour un équilibre entre études et vie étudiante.</p>
           </article>
-          <article class="content-card">
-            <img src="photo/num.jpg" alt="Laboratoire informatique ISITCOM">
+          <article class="content-card" data-animate="fade-up">
+            <img src="photo/num.jpg" alt="Laboratoire informatique ISITCOM" loading="lazy">
             <span class="card-label">Laboratoires</span>
             <h3>Labs spécialisés</h3>
             <p>Salles dédiées à l'IoT, la cybersécurité, les réseaux, le multimédia et l'électronique embarquée avec du matériel professionnel.</p>
@@ -74,24 +80,24 @@
 
     <section class="section">
       <div class="container">
-        <div class="section-header">
+        <div class="section-header" data-animate="fade-up">
           <div>
             <h2>Infrastructures & services</h2>
             <p>Tout ce dont vous avez besoin pour réussir votre parcours universitaire.</p>
           </div>
         </div>
         <div class="grid-3">
-          <article class="content-card">
+          <article class="content-card" data-animate="fade-up">
             <span class="card-label"><i class="fas fa-wifi"></i> Connectivité</span>
             <h3>Wi-Fi campus complet</h3>
             <p>Accès internet haut débit partout sur le campus, dans les amphis, les labs et les espaces communs.</p>
           </article>
-          <article class="content-card">
+          <article class="content-card" data-animate="fade-up">
             <span class="card-label"><i class="fas fa-book"></i> Bibliothèque</span>
             <h3>Ressources documentaires</h3>
             <p>Une bibliothèque bien fournie avec des ouvrages techniques, des journaux scientifiques et un accès aux bases de données en ligne.</p>
           </article>
-          <article class="content-card">
+          <article class="content-card" data-animate="fade-up">
             <span class="card-label"><i class="fas fa-user-tie"></i> Orientation</span>
             <h3>Suivi & accompagnement</h3>
             <p>Un service d'orientation et d'insertion professionnelle pour aider les étudiants dans leur parcours et leur recherche de stage.</p>
@@ -102,7 +108,7 @@
 
     <section class="section">
       <div class="container">
-        <div class="section-header">
+        <div class="section-header" data-animate="fade-up">
           <div>
             <h2>Clubs étudiants</h2>
             <p>Rejoignez l'un de nos clubs et développez vos compétences au-delà des cours.</p>
@@ -114,24 +120,24 @@
 
     <section class="section">
       <div class="container">
-        <div class="section-header">
+        <div class="section-header" data-animate="fade-up">
           <div>
             <h2>Pourquoi rejoindre un club ?</h2>
             <p>La vie associative est un pilier de l'expérience universitaire à l'ISITCOM.</p>
           </div>
         </div>
         <div class="grid-3">
-          <article class="content-card">
+          <article class="content-card" data-animate="fade-up">
             <span class="card-label"><i class="fas fa-users"></i> Réseau</span>
             <h3>Créer des liens durables</h3>
             <p>Les clubs sont un espace privilégié pour rencontrer des étudiants de toutes les filières et construire un réseau professionnel dès la première année.</p>
           </article>
-          <article class="content-card">
+          <article class="content-card" data-animate="fade-up">
             <span class="card-label"><i class="fas fa-tools"></i> Compétences</span>
             <h3>Pratiquer et innover</h3>
             <p>Hackathons, ateliers techniques, projets collaboratifs — les clubs sont le lieu où la théorie se transforme en réalisations concrètes.</p>
           </article>
-          <article class="content-card">
+          <article class="content-card" data-animate="fade-up">
             <span class="card-label"><i class="fas fa-trophy"></i> Compétitions</span>
             <h3>Représenter l'ISITCOM</h3>
             <p>Participez à des compétitions nationales et internationales en robotique, programmation, design et télécommunications.</p>
