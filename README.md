@@ -28,47 +28,74 @@ Welcome to the **ISITCOM** (Institut Supérieur d'Informatique et des Technologi
 The application implements a robust, deeply modernized MVC-style architecture.
 
 - **Frontend**: Responsive HTML5, modular Vanilla CSS, and modern asynchronous JavaScript (`app.js`).
-- **Backend Environment**: Node.js utilizing the Express.js framework.
-- **Database**: Zero-dependency **SQLite** implementation utilizing Node 22.5+ native `node:sqlite` for raw, blisteringly fast SQL relational transactions.
-- **Security**: JWT (JSON Web Tokens) for session management alongside `bcryptjs` for cryptographic password hashing.
+- **Backend Environment**: Node.js utilizing the Express 5.x framework.
+- **Database**: **PostgreSQL 15** for reliable relational data management.
+- **Security**: 
+    - **JWT (JSON Web Tokens)** for session management.
+    - **Bcryptjs** for cryptographic password hashing.
+    - **Helmet.js** for secure HTTP headers.
+    - **Express Rate Limit** for brute-force protection.
+- **Containerization**: **Docker** & **Docker Compose** for seamless environment orchestration.
 
 ### Code Organization
 ```text
 ├── assets/          # Frontend logic (app.js) and CSS styling (style.css)
 ├── photo/           # Publicly served images
 ├── src/
-│   ├── database/    # SQLite Connection & Automated Table/Seed Initialization
-│   ├── middleware/  # JWT Authentication Handlers
+│   ├── database/    # PostgreSQL Connection & Automated Table/Seed Initialization
+│   ├── middleware/  # JWT Authentication & Security Handlers
 │   └── routes/      # Modular Domain Routing (Auth, Admin, Student, Public)
-├── data/            # Local directory where SQLite saves database.sqlite
+├── data/            # Local directory for persistent database volumes
 ├── server.js        # Core Web Server Application Entrypoint
+├── Dockerfile       # Application container definition
+└── docker-compose.yml # Service orchestration (App + Database)
 ```
 
 ---
 
 ## Installation & Startup Guide
 
-### 1. Requirements
-Ensure you are running an environment compatible directly with built-in SQLite:
-- **Node.js** v22.5.0 or higher.
+### 1. Prerequisites
+- **Node.js** v20+ (if running locally)
+- **Docker & Docker Compose** (Recommended)
+- **PostgreSQL 15** (if running without Docker)
 
-### 2. Install Dependencies
-Run the installation script to grab the minimal requirements (Express, JWT, bcrypt):
-```bash
-npm install
+### 2. Environment Configuration
+Create a `.env` file in the root directory (refer to `.env.example`):
+```env
+PORT=3000
+JWT_SECRET=your_super_secret_key
+POSTGRES_USER=isitcom_admin
+POSTGRES_PASSWORD=isitcom_secure_password
+POSTGRES_DB=isitcom_db
+POSTGRES_HOST=localhost # Use 'postgres' if running via Docker
+POSTGRES_PORT=5432
 ```
 
-### 3. Launching the Platform
-Start the backend server on your machine:
+### 3. Launching with Docker (Recommended)
+The easiest way to start the entire stack including the database:
 ```bash
-npm start
+docker-compose up --build
 ```
-*The database (`database.sqlite`) will automatically initialize and securely seed its schema and initial demo data if it did not exist.*
+
+### 4. Manual Local Launch
+If you prefer running the backend manually:
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+2. **Start the Server**:
+   ```bash
+   npm start
+   # Or for development with auto-reload:
+   npm run dev
+   ```
+*The database schema and demo data will automatically initialize upon first connection.*
 
 Navigate to: `http://localhost:3000`
 
-### 4. Demo Login Credentials
-To test the full capability of the administrative dashboard, use the pre-seeded admin account:
+### 5. Demo Login Credentials
+To test the full capability of the administrative dashboard:
 - **Email**: `admin@isitcom.rnu.tn`
 - **Password**: `admin123`
 
