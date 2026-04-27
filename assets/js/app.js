@@ -10,6 +10,8 @@ const state = {
   registrations: [],
   activity: { clubs: [], events: [] },
   allUsers: [],
+  ownerRequests: [],
+  userSearch: "",
   toastTimer: null
 };
 
@@ -29,10 +31,26 @@ function clearSession() {
   state.user = null;
   state.activity = { clubs: [], events: [] };
   state.allUsers = [];
+  state.ownerRequests = [];
+  state.userSearch = "";
+}
+
+function isAdmin() { return state.user?.role === "admin"; }
+function isTeacher() { return state.user?.role === "teacher"; }
+function isClubOwner() { return state.user?.role === "club_owner"; }
+function roleLabel(role) {
+  if (role === "admin") return "Administrateur";
+  if (role === "teacher") return "Enseignant";
+  if (role === "club_owner") return "Responsable club";
+  if (role === "student") return "Etudiant";
+  return role || "Compte";
 }
 
 async function apiRequest(url, options = {}) {
-  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+  const headers = { ...(options.headers || {}) };
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = headers["Content-Type"] || "application/json";
+  }
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
   const response = await fetch(url, { ...options, headers });
@@ -141,6 +159,8 @@ function updatePortalState() {
   updateAuthChips();
   const sectionGuest = qs("[data-section-guest]");
   const sectionStudent = qs("[data-section-student]");
+  const sectionOwner = qs("[data-section-owner]");
+  const sectionTeacher = qs("[data-section-teacher]");
   const sectionAdmin = qs("[data-section-admin]");
 
   if (!sectionGuest) return;
@@ -148,25 +168,54 @@ function updatePortalState() {
   if (!state.user) {
     sectionGuest.hidden = false;
     if (sectionStudent) sectionStudent.hidden = true;
+    if (sectionOwner) sectionOwner.hidden = true;
+    if (sectionTeacher) sectionTeacher.hidden = true;
     if (sectionAdmin) sectionAdmin.hidden = true;
     return;
   }
 
   sectionGuest.hidden = true;
 
-  if (state.user.role === "admin") {
+  if (isAdmin()) {
     if (sectionStudent) sectionStudent.hidden = true;
+    if (sectionOwner) sectionOwner.hidden = true;
+    if (sectionTeacher) sectionTeacher.hidden = true;
     if (sectionAdmin) {
       sectionAdmin.hidden = false;
       loadAdminData();
+    }
+  } else if (isTeacher()) {
+    if (sectionStudent) sectionStudent.hidden = true;
+    if (sectionOwner) sectionOwner.hidden = true;
+    if (sectionAdmin) sectionAdmin.hidden = true;
+    if (sectionTeacher) {
+      sectionTeacher.hidden = false;
+      renderTeacherDashboard();
+      loadTeacherData();
+    }
+  } else if (isClubOwner()) {
+    if (sectionStudent) sectionStudent.hidden = true;
+    if (sectionTeacher) sectionTeacher.hidden = true;
+    if (sectionAdmin) sectionAdmin.hidden = true;
+    if (sectionOwner) {
+      sectionOwner.hidden = false;
+      const welcome = qs("#owner-welcome");
+      if (welcome) welcome.textContent = `Bonjour, ${state.user.fullName} !`;
+      const clubLabel = qs("[data-owned-club-label]");
+      if (clubLabel) clubLabel.textContent = state.user.ownedClubName || "Club non rattache";
+      renderUserDashboard(qs("[data-owner-dashboard]"));
+      renderOwnerRequests();
+      loadOwnerRequests();
     }
   } else {
     if (sectionStudent) {
       sectionStudent.hidden = false;
       const welcome = qs("#student-welcome");
       if (welcome) welcome.textContent = `Bonjour, ${state.user.fullName} !`;
-      renderUserDashboard();
+      renderUserDashboard(qs("[data-user-dashboard]"));
     }
+    if (sectionOwner) sectionOwner.hidden = true;
+    if (sectionTeacher) sectionTeacher.hidden = true;
     if (sectionAdmin) sectionAdmin.hidden = true;
   }
 }
@@ -198,8 +247,8 @@ async function loadUserActivity() {
   }
 }
 
-function renderUserDashboard() {
-  const dashboard = qs("[data-user-dashboard]");
+function renderUserDashboard(target = null) {
+  const dashboard = target || qs("[data-user-dashboard]");
   if (!dashboard || !state.user) return;
 
   const clubRows = state.activity.clubs.length === 0
@@ -274,6 +323,70 @@ function renderUserDashboard() {
     </div>`;
 }
 
+async function loadOwnerRequests() {
+  if (!state.user || !isClubOwner()) return;
+  try {
+    const data = await apiRequest("/api/club-owner/requests");
+    state.ownerRequests = data.requests || [];
+    renderOwnerRequests();
+  } catch (e) {
+    console.warn("Demandes club non chargees:", e.message);
+  }
+}
+
+function renderOwnerRequests() {
+  const wrap = qs("[data-owner-requests]");
+  if (!wrap || !state.user || !isClubOwner()) return;
+
+  if (!state.ownerRequests.length) {
+    wrap.innerHTML = `<div class="empty-state"><i class="fas fa-users-check"></i><span>Aucune demande en attente pour ce club.</span></div>`;
+    return;
+  }
+
+  wrap.innerHTML = `
+    <table class="data-table">
+      <thead><tr>
+        <th>Etudiant</th><th>Email</th><th>Date</th><th>Statut</th><th>Action</th>
+      </tr></thead>
+      <tbody>
+        ${state.ownerRequests.map(req => `
+          <tr>
+            <td><strong>${req.fullName}</strong></td>
+            <td style="color:var(--muted)">${req.email}</td>
+            <td style="color:var(--muted);white-space:nowrap">${formatDate(req.createdAt)}</td>
+            <td><span class="badge ${req.status === 'accepted' ? 'badge-role-admin' : req.status === 'rejected' ? 'badge-status-full' : 'badge-status-pending'}">${req.status}</span></td>
+            <td>
+              ${req.status === "pending" ? `
+                <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                  <button class="button" style="padding:.4rem .8rem;font-size:.85rem" data-owner-request-action="${req.id}" data-owner-status="accepted">
+                    <i class="fas fa-check"></i>
+                  </button>
+                  <button class="button-danger" style="padding:.4rem .8rem;font-size:.85rem" data-owner-request-action="${req.id}" data-owner-status="rejected">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              ` : `<span style="color:var(--muted)">Traitee</span>`}
+            </td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>`;
+}
+
+function renderTeacherDashboard() {
+  const title = qs("[data-teacher-title]");
+  if (title && state.user) title.textContent = `Bonjour, ${state.user.fullName} !`;
+  const courseTable = qs("[data-teacher-courses-table]");
+  const resourceTable = qs("[data-teacher-resources-table]");
+  if (courseTable) renderCoursesTable(courseTable, false);
+  if (resourceTable) renderResourcesTable(resourceTable, false);
+}
+
+function loadTeacherData() {
+  if (!isTeacher()) return;
+  renderTeacherDashboard();
+}
+
 // ─── PUBLIC CARD RENDERS ──────────────────────────────────────────────────────
 
 function renderFormationCards(targets) {
@@ -299,8 +412,13 @@ function renderClubCards(targets, limit) {
   const source = limit ? state.clubs.slice(0, limit) : state.clubs;
   const html = source.map(club => `
     <article class="content-card">
-      ${club.img ? `<img src="${club.img}" alt="${club.name}" style="border-radius:18px;height:200px;width:100%;object-fit:cover;margin-bottom:1rem">` : ""}
-      <span class="card-label">${club.category}</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <span class="card-label">${club.category}</span>
+        <a href="https://www.instagram.com/" target="_blank" class="social-icon-link" title="Suivre sur Instagram" style="color: #E1306C; font-size: 1.1rem;">
+          <i class="fab fa-instagram"></i>
+        </a>
+      </div>
+      ${club.img ? `<img src="${club.img}" alt="${club.name}" style="border-radius:18px;height:200px;width:100%;object-fit:cover;margin-top:1rem;margin-bottom:1rem">` : ""}
       <h3>${club.name}</h3>
       <p>${club.desc}</p>
       <div class="meta-row">
@@ -369,7 +487,12 @@ function renderCourses() {
   });
   grid.innerHTML = filtered.map(c => `
     <article class="resource-card">
-      <span class="resource-tag">${c.formation}</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <span class="resource-tag">${c.formation}</span>
+        <a href="${c.link || 'https://drive.google.com/'}" target="_blank" class="social-icon-link" title="Consulter sur Google Drive" style="color: #34A853; font-size: 1.1rem;">
+          <i class="fab fa-google-drive"></i>
+        </a>
+      </div>
       <h3>${c.title}</h3>
       <p>${c.description}</p>
       <div class="meta-row">
@@ -384,7 +507,12 @@ function renderResources() {
   if (!grid) return;
   grid.innerHTML = state.resources.map(r => `
     <article class="resource-card">
-      <span class="resource-tag">${r.type}</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <span class="resource-tag">${r.type}</span>
+        <a href="${r.link || 'https://drive.google.com/'}" target="_blank" class="social-icon-link" title="Consulter sur Google Drive" style="color: #34A853; font-size: 1.1rem;">
+          <i class="fab fa-google-drive"></i>
+        </a>
+      </div>
       <h3>${r.title}</h3>
       <p>${r.description}</p>
       <div class="meta-row">
@@ -450,12 +578,13 @@ function renderAdminMetrics(stats) {
 
 function renderAdminTables() {
   renderFormationsTable();
-  renderCoursesTable();
-  renderResourcesTable();
+  renderCoursesTable("[data-courses-table]", true);
+  renderResourcesTable("[data-resources-table]", true);
   renderClubsTable();
   renderEventsTable();
   renderRegistrationsTable();
   renderUsersTable();
+  populateClubSelects();
 }
 
 function renderFormationsTable() {
@@ -476,9 +605,16 @@ function renderFormationsTable() {
             <td><strong>${f.name}</strong></td>
             <td><span class="badge badge-level">${f.level}</span></td>
             <td style="color:var(--muted);max-width:260px;font-size:.93rem">${f.description}</td>
-            <td><button class="button-danger" data-delete-formation="${f.id}">
-              <i class="fas fa-trash-alt"></i> Supprimer
-            </button></td>
+            <td>
+              <div style="display:flex;gap:0.5rem">
+                <button class="button-warning" data-edit-formation="${f.id}">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="button-danger" data-delete-formation="${f.id}">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </td>
           </tr>`).join("")}
       </tbody>
     </table>`;
@@ -502,9 +638,16 @@ function renderClubsTable() {
             <td><strong>${c.name}</strong></td>
             <td><span class="badge badge-category">${c.category}</span></td>
             <td>${formatCount(c.members)}</td>
-            <td><button class="button-danger" data-delete-club="${c.id}">
-              <i class="fas fa-trash-alt"></i> Supprimer
-            </button></td>
+            <td>
+              <div style="display:flex;gap:0.5rem">
+                <button class="button-warning" data-edit-club="${c.id}">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="button-danger" data-delete-club="${c.id}">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </td>
           </tr>`).join("")}
       </tbody>
     </table>`;
@@ -535,13 +678,21 @@ function renderEventsTable() {
             <td>${ev.location}</td>
             <td>
               <span class="badge ${full ? "badge-status-full" : "badge-level"}">
-                ${ev.registered} / ${ev.capacity}
+              ${ev.registered} / ${ev.capacity}
               </span>
-            </td>
-            <td><button class="button-danger" data-delete-event="${ev.id}">
-              <i class="fas fa-trash-alt"></i> Supprimer
-            </button></td>
-          </tr>`;
+              </td>
+              <td>
+              <div style="display:flex;gap:0.5rem">
+              <button class="button-warning" data-edit-event="${ev.id}">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="button-danger" data-delete-event="${ev.id}">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+              </div>
+              </td>
+              </tr>`;
+
         }).join("")}
       </tbody>
     </table>`;
@@ -550,31 +701,51 @@ function renderEventsTable() {
 function renderUsersTable() {
   const wrap = qs("[data-users-table]");
   if (!wrap) return;
-  if (!state.allUsers.length) {
+  const search = state.userSearch.trim().toLowerCase();
+  const users = search
+    ? state.allUsers.filter(u => [u.fullName, u.email, u.role, u.clubName || ""].join(" ").toLowerCase().includes(search))
+    : state.allUsers;
+
+  if (!users.length) {
     wrap.innerHTML = `<div class="empty-state"><i class="fas fa-user-cog"></i><span>Aucun utilisateur enregistré.</span></div>`;
     return;
   }
   wrap.innerHTML = `
     <table class="data-table">
       <thead><tr>
-        <th>Nom complet</th><th>Email</th><th>Rôle</th><th>Date d'inscription</th>
+        <th>Profil</th><th>Nom complet</th><th>Email</th><th>Role</th><th>Club</th><th>Action</th>
       </tr></thead>
       <tbody>
-        ${state.allUsers.map(u => `
+        ${users.map(u => `
           <tr>
+            <td>
+              <img src="${u.profilePicture || 'photo/face.jpg'}" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:1px solid var(--line)">
+            </td>
             <td><strong>${u.fullName}</strong></td>
             <td style="color:var(--muted)">${u.email}</td>
-            <td><span class="badge ${u.role === "admin" ? "badge-role-admin" : "badge-role-student"}">
-              ${u.role === "admin" ? "Administrateur" : "Étudiant"}
+            <td><span class="badge ${u.role === "admin" ? "badge-role-admin" : (u.role === "teacher" ? "badge-role-teacher" : (u.role === "club_owner" ? "badge-role-owner" : "badge-role-student"))}">
+              ${roleLabel(u.role)}
             </span></td>
-            <td style="color:var(--muted);font-size:.9rem">${formatDate(u.createdAt)}</td>
+            <td style="color:var(--muted)">${u.clubName || "—"}</td>
+            <td>
+              <button class="button-warning" data-edit-user="${u.id}">
+                <i class="fas fa-edit"></i>
+              </button>
+            </td>
           </tr>`).join("")}
       </tbody>
     </table>`;
 }
 
-function renderCoursesTable() {
-  const wrap = qs("[data-courses-table]");
+function populateClubSelects() {
+  const selects = qsa("[data-user-club-select]");
+  if (!selects.length) return;
+  const options = `<option value="">Aucun club</option>` + state.clubs.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+  selects.forEach(sel => { sel.innerHTML = options; });
+}
+
+function renderCoursesTable(target = null, editable = true) {
+  const wrap = typeof target === "string" ? qs(target) : (target || qs("[data-courses-table]"));
   if (!wrap) return;
   if (!state.courses.length) {
     wrap.innerHTML = `<div class="empty-state"><i class="fas fa-book"></i><span>Aucun cours enregistré.</span></div>`;
@@ -583,7 +754,7 @@ function renderCoursesTable() {
   wrap.innerHTML = `
     <table class="data-table">
       <thead><tr>
-        <th>Titre</th><th>Formation</th><th>Enseignant</th><th>Action</th>
+        <th>Titre</th><th>Formation</th><th>Enseignant</th>${editable ? "<th>Action</th>" : ""}
       </tr></thead>
       <tbody>
         ${state.courses.map(c => `
@@ -591,16 +762,23 @@ function renderCoursesTable() {
             <td><strong>${c.title}</strong></td>
             <td><span class="badge badge-level">${c.formation}</span></td>
             <td style="color:var(--muted)">${c.teacher}</td>
-            <td><button class="button-danger" data-delete-course="${c.id}">
-              <i class="fas fa-trash-alt"></i> Supprimer
-            </button></td>
+            ${editable ? `<td>
+              <div style="display:flex;gap:0.5rem">
+                <button class="button-warning" data-edit-course="${c.id}">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="button-danger" data-delete-course="${c.id}">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </td>` : ""}
           </tr>`).join("")}
       </tbody>
     </table>`;
 }
 
-function renderResourcesTable() {
-  const wrap = qs("[data-resources-table]");
+function renderResourcesTable(target = null, editable = true) {
+  const wrap = typeof target === "string" ? qs(target) : (target || qs("[data-resources-table]"));
   if (!wrap) return;
   if (!state.resources.length) {
     wrap.innerHTML = `<div class="empty-state"><i class="fas fa-file-alt"></i><span>Aucune ressource enregistrée.</span></div>`;
@@ -609,7 +787,7 @@ function renderResourcesTable() {
   wrap.innerHTML = `
     <table class="data-table">
       <thead><tr>
-        <th>Titre</th><th>Type</th><th>Formation</th><th>Action</th>
+        <th>Titre</th><th>Type</th><th>Formation</th>${editable ? "<th>Action</th>" : ""}
       </tr></thead>
       <tbody>
         ${state.resources.map(r => `
@@ -617,9 +795,16 @@ function renderResourcesTable() {
             <td><strong>${r.title}</strong></td>
             <td><span class="badge badge-category">${r.type}</span></td>
             <td style="color:var(--muted)">${r.formation}</td>
-            <td><button class="button-danger" data-delete-resource="${r.id}">
-              <i class="fas fa-trash-alt"></i> Supprimer
-            </button></td>
+            ${editable ? `<td>
+              <div style="display:flex;gap:0.5rem">
+                <button class="button-warning" data-edit-resource="${r.id}">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="button-danger" data-delete-resource="${r.id}">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </td>` : ""}
           </tr>`).join("")}
       </tbody>
     </table>`;
@@ -787,7 +972,147 @@ async function updateRegistrationStatus(id, status) {
   } catch (e) { showToast(e.message, "danger"); }
 }
 
+async function updateOwnerRequestStatus(id, status) {
+  try {
+    const data = await apiRequest(`/api/club-owner/requests/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status })
+    });
+    showToast(data.message, "success");
+    await loadOwnerRequests();
+  } catch (e) {
+    showToast(e.message, "danger");
+  }
+}
+
+// ─── EDIT MODAL LOGIC ─────────────────────────────────────────────────────────
+
+let currentEdit = { type: null, id: null };
+
+function openEditModal(type, id) {
+  const modal = qs("#edit-modal");
+  const title = qs("#modal-title");
+  const fields = qs("#modal-fields");
+  if (!modal || !fields) return;
+
+  currentEdit = { type, id };
+  fields.innerHTML = "";
+  modal.classList.add("is-open");
+
+  if (type === "formation") {
+    const item = state.formations.find(f => f.id === id);
+    title.textContent = "Modifier la formation";
+    fields.innerHTML = `
+      <div class="form-field"><label>Nom</label><input type="text" name="name" value="${item.name}" required></div>
+      <div class="form-field"><label>Niveau</label><input type="text" name="level" value="${item.level}" required></div>
+      <div class="form-field"><label>Description</label><textarea name="description" required>${item.description}</textarea></div>
+    `;
+  } else if (type === "club") {
+    const item = state.clubs.find(c => c.id === id);
+    title.textContent = "Modifier le club";
+    fields.innerHTML = `
+      <div class="form-field"><label>Nom</label><input type="text" name="name" value="${item.name}" required></div>
+      <div class="form-field"><label>Catégorie</label><input type="text" name="category" value="${item.category}" required></div>
+      <div class="form-field"><label>Image URL</label><input type="text" name="img" value="${item.img || ""}"></div>
+      <div class="form-field"><label>Description</label><textarea name="desc" required>${item.description || item.desc}</textarea></div>
+    `;
+  } else if (type === "event") {
+    const item = state.events.find(e => e.id === id);
+    title.textContent = "Modifier l'événement";
+    fields.innerHTML = `
+      <div class="form-field"><label>Titre</label><input type="text" name="title" value="${item.title}" required></div>
+      <div class="form-field"><label>Date</label><input type="date" name="date" value="${item.eventDate || item.date}" required></div>
+      <div class="form-field"><label>Lieu</label><input type="text" name="location" value="${item.location}" required></div>
+      <div class="form-field"><label>Organisateur</label><input type="text" name="organizer" value="${item.organizer}" required></div>
+      <div class="form-field"><label>Capacité</label><input type="number" name="capacity" value="${item.capacity}" required></div>
+      <div class="form-field"><label>Description</label><textarea name="desc" required>${item.description || item.desc}</textarea></div>
+    `;
+  } else if (type === "course") {
+    const item = state.courses.find(c => c.id === id);
+    title.textContent = "Modifier le cours";
+    fields.innerHTML = `
+      <div class="form-field"><label>Titre</label><input type="text" name="title" value="${item.title}" required></div>
+      <div class="form-field"><label>Formation</label><input type="text" name="formation" value="${item.formation}" required></div>
+      <div class="form-field"><label>Enseignant</label><input type="text" name="teacher" value="${item.teacher}" required></div>
+      <div class="form-field"><label>Lien Drive</label><input type="url" name="link" value="${item.link || ""}"></div>
+      <div class="form-field"><label>Description</label><textarea name="description" required>${item.description}</textarea></div>
+    `;
+  } else if (type === "resource") {
+    const item = state.resources.find(r => r.id === id);
+    title.textContent = "Modifier la ressource";
+    fields.innerHTML = `
+      <div class="form-field"><label>Titre</label><input type="text" name="title" value="${item.title}" required></div>
+      <div class="form-field"><label>Type</label><input type="text" name="type" value="${item.type}" required></div>
+      <div class="form-field"><label>Formation</label><input type="text" name="formation" value="${item.formation}" required></div>
+      <div class="form-field"><label>Lien Drive</label><input type="url" name="link" value="${item.link || ""}"></div>
+      <div class="form-field"><label>Description</label><textarea name="description" required>${item.description}</textarea></div>
+    `;
+  } else if (type === "user") {
+    const item = state.allUsers.find(u => u.id === id);
+    title.textContent = "Modifier le compte";
+    fields.innerHTML = `
+      <div class="form-field"><label>Nom complet</label><input type="text" name="fullName" value="${item.fullName}" required></div>
+      <div class="form-field"><label>Email</label><input type="email" name="email" value="${item.email}" required></div>
+      <div class="form-field"><label>Type de compte</label>
+        <select name="role" required>
+          <option value="student" ${item.role === "student" ? "selected" : ""}>Etudiant</option>
+          <option value="club_owner" ${item.role === "club_owner" ? "selected" : ""}>Responsable de club</option>
+          <option value="teacher" ${item.role === "teacher" ? "selected" : ""}>Enseignant</option>
+          <option value="admin" ${item.role === "admin" ? "selected" : ""}>Administrateur</option>
+        </select>
+      </div>
+      <div class="form-field"><label>Club associe</label>
+        <select name="clubId" data-user-club-select>
+          <option value="">Aucun club</option>
+        </select>
+      </div>
+      <div class="form-field"><label>Photo de profil</label><input type="file" name="profilePicture" accept="image/*"></div>
+      <div class="form-field"><label>Mot de passe temporaire</label><input type="text" name="password" placeholder="Laisser vide pour conserver"></div>
+    `;
+    populateClubSelects();
+    const clubField = fields.querySelector('select[name="clubId"]');
+    if (clubField && item.ownedClubId) clubField.value = String(item.ownedClubId);
+  }
+}
+
+function closeEditModal() {
+  qs("#edit-modal")?.classList.remove("is-open");
+}
+
+async function handleEditSubmit(e) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const { type, id } = currentEdit;
+
+  let body;
+  if (type === "user") {
+    body = fd;
+  } else {
+    body = JSON.stringify(Object.fromEntries(fd.entries()));
+  }
+
+  try {
+    const res = await apiRequest(`/api/admin/${type}s/${id}`, {
+      method: "PATCH",
+      body: body
+    });
+
+    showToast(res.message, "success");
+    closeEditModal();
+
+    // Refresh data
+    await loadBackendData();
+    renderPageData();
+    if (state.user?.role === "admin") renderAdminTables();
+  } catch (err) {
+    showToast(err.message, "danger");
+  }
+}
+
 function setupDelegatedActions() {
+  qs("#edit-form")?.addEventListener("submit", handleEditSubmit);
+  qs("[data-close-modal]")?.addEventListener("click", closeEditModal);
+
   document.addEventListener("click", async e => {
     const joinBtn = e.target.closest("[data-club-join]");
     if (joinBtn) { await joinClub(Number(joinBtn.dataset.clubJoin)); return; }
@@ -795,6 +1120,26 @@ function setupDelegatedActions() {
     const regBtn = e.target.closest("[data-event-register]");
     if (regBtn && !regBtn.disabled) { await registerToEvent(Number(regBtn.dataset.eventRegister)); return; }
 
+    // Edits
+    const editForm = e.target.closest("[data-edit-formation]");
+    if (editForm) { openEditModal("formation", Number(editForm.dataset.editFormation)); return; }
+
+    const editClub = e.target.closest("[data-edit-club]");
+    if (editClub) { openEditModal("club", Number(editClub.dataset.editClub)); return; }
+
+    const editEvent = e.target.closest("[data-edit-event]");
+    if (editEvent) { openEditModal("event", Number(editEvent.dataset.editEvent)); return; }
+
+    const editCourse = e.target.closest("[data-edit-course]");
+    if (editCourse) { openEditModal("course", Number(editCourse.dataset.editCourse)); return; }
+
+    const editRes = e.target.closest("[data-edit-resource]");
+    if (editRes) { openEditModal("resource", Number(editRes.dataset.editResource)); return; }
+
+    const editUser = e.target.closest("[data-edit-user]");
+    if (editUser) { openEditModal("user", Number(editUser.dataset.editUser)); return; }
+
+    // Deletes
     const delForm = e.target.closest("[data-delete-formation]");
     if (delForm) { await deleteFormation(Number(delForm.dataset.deleteFormation)); return; }
 
@@ -813,6 +1158,12 @@ function setupDelegatedActions() {
     const statusReg = e.target.closest("[data-status-reg]");
     if (statusReg) { await updateRegistrationStatus(Number(statusReg.dataset.statusReg), statusReg.dataset.status); return; }
 
+    const ownerAction = e.target.closest("[data-owner-request-action]");
+    if (ownerAction) {
+      await updateOwnerRequestStatus(Number(ownerAction.dataset.ownerRequestAction), ownerAction.dataset.ownerStatus);
+      return;
+    }
+
     const logoutBtn = e.target.closest("[data-logout]");
     if (logoutBtn) {
       clearSession();
@@ -826,13 +1177,15 @@ function setupDelegatedActions() {
 
 function setupPortalForms() {
   const loginForm = qs("[data-login-form]");
-  const registerForm = qs("[data-register-form]");
   const studentForm = qs("[data-student-form]");
   const adminForm = qs("[data-admin-form]");
   const clubAdminForm = qs("[data-club-admin-form]");
   const eventAdminForm = qs("[data-event-admin-form]");
   const courseAdminForm = qs("[data-course-admin-form]");
   const resourceAdminForm = qs("[data-resource-admin-form]");
+  const userAdminForm = qs("[data-user-admin-form]");
+  const teacherCourseForm = qs("[data-teacher-course-form]");
+  const teacherResourceForm = qs("[data-teacher-resource-form]");
 
   loginForm?.addEventListener("submit", async e => {
     e.preventDefault();
@@ -847,22 +1200,9 @@ function setupPortalForms() {
       await loadUserActivity();
       updatePortalState();
       showToast(`Bienvenue, ${data.user.fullName} !`, "success");
-    } catch (e) { showToast(e.message, "danger"); }
-  });
-
-  registerForm?.addEventListener("submit", async e => {
-    e.preventDefault();
-    const fd = new FormData(registerForm);
-    try {
-      const data = await apiRequest("/api/auth/register", {
-        method: "POST",
-        body: JSON.stringify({ fullName: fd.get("fullName"), email: fd.get("email"), password: fd.get("password") })
-      });
-      setSession(data.token, data.user);
-      registerForm.reset();
-      updatePortalState();
-      showToast("Compte créé avec succès !", "success");
-    } catch (e) { showToast(e.message, "danger"); }
+    } catch (e) {
+      showToast(e.message, "danger");
+    }
   });
 
   studentForm?.addEventListener("submit", async e => {
@@ -872,14 +1212,19 @@ function setupPortalForms() {
       await apiRequest("/api/registrations", {
         method: "POST",
         body: JSON.stringify({
-          nom: fd.get("nom"), prenom: fd.get("prenom"),
-          cin: fd.get("cin"), classe: fd.get("classe"),
-          email: fd.get("email"), userId: state.user ? state.user.id : null
+          nom: fd.get("nom"),
+          prenom: fd.get("prenom"),
+          cin: fd.get("cin"),
+          classe: fd.get("classe"),
+          email: fd.get("email"),
+          userId: state.user ? state.user.id : null
         })
       });
       studentForm.reset();
-      showToast("Dossier d'inscription envoyé avec succès.", "success");
-    } catch (e) { showToast(e.message, "danger"); }
+      showToast("Dossier d'inscription envoye avec succes.", "success");
+    } catch (e) {
+      showToast(e.message, "danger");
+    }
   });
 
   adminForm?.addEventListener("submit", async e => {
@@ -894,9 +1239,11 @@ function setupPortalForms() {
       adminForm.reset();
       renderFormationsTable();
       renderFormationCards(qsa("[data-formations-grid]"));
-      showToast("Formation ajoutée.", "success");
+      showToast("Formation ajoutee.", "success");
       loadAdminData();
-    } catch (e) { showToast(e.message, "danger"); }
+    } catch (e) {
+      showToast(e.message, "danger");
+    }
   });
 
   clubAdminForm?.addEventListener("submit", async e => {
@@ -905,16 +1252,19 @@ function setupPortalForms() {
     try {
       const data = await apiRequest("/api/admin/clubs", {
         method: "POST",
-        body: JSON.stringify({ name: fd.get("name"), category: fd.get("category"), desc: fd.get("desc") })
+        body: JSON.stringify({ name: fd.get("name"), category: fd.get("category"), desc: fd.get("desc"), img: fd.get("img") })
       });
       state.clubs.push(data.club);
       clubAdminForm.reset();
       renderClubsTable();
       renderClubCards(qsa("[data-clubs-grid]"), 0);
       renderClubCards(qsa("[data-clubs-preview]"), 3);
-      showToast("Club créé.", "success");
+      populateClubSelects();
+      showToast("Club cree.", "success");
       loadAdminData();
-    } catch (e) { showToast(e.message, "danger"); }
+    } catch (e) {
+      showToast(e.message, "danger");
+    }
   });
 
   eventAdminForm?.addEventListener("submit", async e => {
@@ -923,11 +1273,7 @@ function setupPortalForms() {
     try {
       const data = await apiRequest("/api/admin/events", {
         method: "POST",
-        body: JSON.stringify({
-          title: fd.get("title"), date: fd.get("date"),
-          location: fd.get("location"), organizer: fd.get("organizer"),
-          desc: fd.get("desc"), capacity: fd.get("capacity")
-        })
+        body: JSON.stringify({ title: fd.get("title"), date: fd.get("date"), location: fd.get("location"), organizer: fd.get("organizer"), desc: fd.get("desc"), capacity: fd.get("capacity") })
       });
       state.events.push(data.event);
       eventAdminForm.reset();
@@ -935,9 +1281,11 @@ function setupPortalForms() {
       renderEventCards(qsa("[data-events-grid]"), 0);
       renderEventCards(qsa("[data-events-preview]"), 3);
       renderCalendar();
-      showToast("Événement planifié.", "success");
+      showToast("Evenement planifie.", "success");
       loadAdminData();
-    } catch (e) { showToast(e.message, "danger"); }
+    } catch (e) {
+      showToast(e.message, "danger");
+    }
   });
 
   courseAdminForm?.addEventListener("submit", async e => {
@@ -946,15 +1294,17 @@ function setupPortalForms() {
     try {
       const data = await apiRequest("/api/admin/courses", {
         method: "POST",
-        body: JSON.stringify({ title: fd.get("title"), formation: fd.get("formation"), teacher: fd.get("teacher"), description: fd.get("description") })
+        body: JSON.stringify({ title: fd.get("title"), formation: fd.get("formation"), teacher: fd.get("teacher"), description: fd.get("description"), link: fd.get("link") })
       });
       state.courses.push(data.course);
       courseAdminForm.reset();
-      renderCoursesTable();
+      renderCoursesTable("[data-courses-table]", true);
       renderCourses();
-      showToast("Cours ajouté.", "success");
+      showToast("Cours ajoute.", "success");
       loadAdminData();
-    } catch (e) { showToast(e.message, "danger"); }
+    } catch (e) {
+      showToast(e.message, "danger");
+    }
   });
 
   resourceAdminForm?.addEventListener("submit", async e => {
@@ -963,18 +1313,82 @@ function setupPortalForms() {
     try {
       const data = await apiRequest("/api/admin/resources", {
         method: "POST",
-        body: JSON.stringify({ title: fd.get("title"), type: fd.get("type"), formation: fd.get("formation"), description: fd.get("description") })
+        body: JSON.stringify({ title: fd.get("title"), type: fd.get("type"), formation: fd.get("formation"), description: fd.get("description"), link: fd.get("link") })
       });
       state.resources.push(data.resource);
       resourceAdminForm.reset();
-      renderResourcesTable();
+      renderResourcesTable("[data-resources-table]", true);
       renderResources();
-      showToast("Ressource ajoutée.", "success");
+      showToast("Ressource ajoutee.", "success");
       loadAdminData();
-    } catch (e) { showToast(e.message, "danger"); }
+    } catch (e) {
+      showToast(e.message, "danger");
+    }
+  });
+
+  userAdminForm?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const fd = new FormData(userAdminForm);
+    try {
+      const data = await apiRequest("/api/admin/users", {
+        method: "POST",
+        body: fd
+      });
+      state.allUsers.unshift(data.user);
+      userAdminForm.reset();
+      state.userSearch = "";
+      const searchInput = qs("[data-user-search]");
+      if (searchInput) searchInput.value = "";
+      renderUsersTable();
+      populateClubSelects();
+      showToast("Compte cree.", "success");
+      loadAdminData();
+    } catch (e) {
+      showToast(e.message, "danger");
+    }
+  });
+
+  teacherCourseForm?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const fd = new FormData(teacherCourseForm);
+    try {
+      const data = await apiRequest("/api/admin/courses", {
+        method: "POST",
+        body: JSON.stringify({ title: fd.get("title"), formation: fd.get("formation"), teacher: state.user?.fullName || "", description: fd.get("description"), link: fd.get("link") })
+      });
+      state.courses.push(data.course);
+      teacherCourseForm.reset();
+      renderCoursesTable("[data-teacher-courses-table]", false);
+      renderCourses();
+      showToast("Cours publie.", "success");
+    } catch (e) {
+      showToast(e.message, "danger");
+    }
+  });
+
+  teacherResourceForm?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const fd = new FormData(teacherResourceForm);
+    try {
+      const data = await apiRequest("/api/admin/resources", {
+        method: "POST",
+        body: JSON.stringify({ title: fd.get("title"), type: fd.get("type"), formation: fd.get("formation"), description: fd.get("description"), link: fd.get("link") })
+      });
+      state.resources.push(data.resource);
+      teacherResourceForm.reset();
+      renderResourcesTable("[data-teacher-resources-table]", false);
+      renderResources();
+      showToast("Ressource publiee.", "success");
+    } catch (e) {
+      showToast(e.message, "danger");
+    }
+  });
+
+  qs("[data-user-search]")?.addEventListener("input", e => {
+    state.userSearch = e.target.value || "";
+    renderUsersTable();
   });
 }
-
 // ─── COURSE FILTERS ───────────────────────────────────────────────────────────
 
 function setupCourseFilters() {
@@ -1097,6 +1511,67 @@ function setupReadingProgress() {
   });
 }
 
+function setupCustomCursor() {
+  const cursor = document.createElement('div');
+  cursor.className = 'custom-cursor';
+  const ring = document.createElement('div');
+  ring.className = 'custom-cursor-ring';
+  document.body.appendChild(cursor);
+  document.body.appendChild(ring);
+
+  window.addEventListener('mousemove', e => {
+    cursor.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
+    ring.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
+  });
+
+  const interactives = qsa('a, button, .content-card, .spotlight-card, input, select, textarea');
+  interactives.forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursor.classList.add('is-hovering');
+      ring.classList.add('is-hovering');
+    });
+    el.addEventListener('mouseleave', () => {
+      cursor.classList.remove('is-hovering');
+      ring.classList.remove('is-hovering');
+    });
+  });
+}
+
+function setupHeroParallax() {
+  const hero = qs('.page-hero');
+  if (!hero) return;
+  window.addEventListener('scroll', () => {
+    const scrolled = window.pageYOffset;
+    const heroPanel = hero.querySelector('.hero-panel');
+    const heroStack = hero.querySelector('.hero-stack');
+    if (heroPanel) heroPanel.style.transform = `translateY(${scrolled * 0.1}px)`;
+    if (heroStack) heroStack.style.transform = `translateY(${scrolled * 0.15}px)`;
+  });
+}
+
+function setupPageTransitions() {
+  const overlay = document.createElement('div');
+  overlay.className = 'page-transition-overlay';
+  document.body.appendChild(overlay);
+  
+  // Use setTimeout to ensure transition works
+  setTimeout(() => {
+    overlay.classList.add('is-loaded');
+  }, 100);
+
+  qsa('a').forEach(link => {
+    if (link.hostname === window.location.hostname && !link.hash && link.target !== '_blank') {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        overlay.classList.remove('is-loaded');
+        setTimeout(() => {
+          window.location.href = link.href;
+        }, 350);
+      });
+    }
+  });
+}
+
 function animateCounter(el, target, duration) {
   let startTimestamp = null;
   const step = (timestamp) => {
@@ -1124,7 +1599,6 @@ async function initialize() {
   setupCourseFilters();
   setupDelegatedActions();
   setupPortalForms();
-  await hydrateSession();
   try {
     renderSkeletons();
     
@@ -1132,6 +1606,7 @@ async function initialize() {
     await new Promise(r => setTimeout(r, 200));
 
     await loadBackendData();
+    await hydrateSession();
     renderPageData();
     renderCalendar();
   } catch (e) {
@@ -1142,7 +1617,6 @@ async function initialize() {
     setupMagneticButtons();
     setupCardTilt();
     setupReadingProgress();
-    setupCustomCursor();
     setupHeroParallax();
     setupPageTransitions();
   }

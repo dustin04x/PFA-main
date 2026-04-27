@@ -12,6 +12,8 @@ async function initializeDatabase() {
       email TEXT UNIQUE NOT NULL,
       passwordHash TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'student',
+      ownedClubId INTEGER UNIQUE,
+      profilePicture TEXT,
       createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -86,7 +88,9 @@ async function initializeDatabase() {
       title TEXT NOT NULL,
       formation TEXT NOT NULL,
       teacher TEXT NOT NULL,
-      description TEXT NOT NULL
+      description TEXT NOT NULL,
+      link TEXT,
+      createdByUserId INTEGER
     );
 
     CREATE TABLE IF NOT EXISTS resources (
@@ -94,16 +98,23 @@ async function initializeDatabase() {
       title TEXT NOT NULL,
       type TEXT NOT NULL,
       formation TEXT NOT NULL,
-      description TEXT NOT NULL
+      description TEXT NOT NULL,
+      link TEXT,
+      createdByUserId INTEGER
     );
   `);
 
-  // Migrate registrations to include status
-  // Migrate registrations to include status (PostgreSQL handles IF NOT EXISTS or specific error codes better, but we starting fresh here)
+  // Migrate tables to include link column if they already exist
   try {
+    await db.exec(`ALTER TABLE courses ADD COLUMN IF NOT EXISTS link TEXT;`);
+    await db.exec(`ALTER TABLE resources ADD COLUMN IF NOT EXISTS link TEXT;`);
     await db.exec(`ALTER TABLE registrations ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'En attente';`);
+    await db.exec(`ALTER TABLE users ADD COLUMN IF NOT EXISTS profilePicture TEXT;`);
+    await db.exec(`ALTER TABLE users ADD COLUMN IF NOT EXISTS ownedClubId INTEGER UNIQUE;`);
+    await db.exec(`ALTER TABLE courses ADD COLUMN IF NOT EXISTS createdByUserId INTEGER;`);
+    await db.exec(`ALTER TABLE resources ADD COLUMN IF NOT EXISTS createdByUserId INTEGER;`);
   } catch (e) {
-    // Ignore if already exists (Postgres 9.6+ supports IF NOT EXISTS for some ALTER, but for columns we usually check catalogs)
+    // Ignore migration errors
   }
 
   // Seed Admin User
@@ -170,13 +181,13 @@ async function initializeDatabase() {
   const coursesCount = await db.get("SELECT COUNT(id) as count FROM courses");
   if (coursesCount.count === 0) {
     const courses = [
-      ["Développement Front-End React", "Multimédia", "Dr. Ben Ali", "Composants, ergonomie d'interface, états et intégration API."],
-      ["Architecture IoT et MQTT", "IoT", "Pr. Mansouri", "Capteurs, passerelles, protocoles temps réel et tableaux de bord."],
-      ["Réseaux 5G et Sécurité", "Télécom", "Dr. Khelil", "Réseaux mobiles, sécurité des flux et supervision."],
-      ["UX Writing et Design Systems", "Multimédia", "Mme Trabelsi", "Microcopie, composants réutilisables et cohérence produit."]
+      ["Développement Front-End React", "Multimédia", "Dr. Ben Ali", "Composants, ergonomie d'interface, états et intégration API.", "https://drive.google.com/"],
+      ["Architecture IoT et MQTT", "IoT", "Pr. Mansouri", "Capteurs, passerelles, protocoles temps réel et tableaux de bord.", "https://drive.google.com/"],
+      ["Réseaux 5G et Sécurité", "Télécom", "Dr. Khelil", "Réseaux mobiles, sécurité des flux et supervision.", "https://drive.google.com/"],
+      ["UX Writing et Design Systems", "Multimédia", "Mme Trabelsi", "Microcopie, composants réutilisables et cohérence produit.", "https://drive.google.com/"]
     ];
-    for (const [title, form, teacher, desc] of courses) {
-      await db.run("INSERT INTO courses (title, formation, teacher, description) VALUES (?, ?, ?, ?)", [title, form, teacher, desc]);
+    for (const [title, form, teacher, desc, link] of courses) {
+      await db.run("INSERT INTO courses (title, formation, teacher, description, link) VALUES (?, ?, ?, ?, ?)", [title, form, teacher, desc, link]);
     }
   }
 
@@ -184,13 +195,32 @@ async function initializeDatabase() {
   const resourcesCount = await db.get("SELECT COUNT(id) as count FROM resources");
   if (resourcesCount.count === 0) {
     const resources = [
-      ["Cours React Complet", "Cours", "Multimédia", "Support de cours, TP et mini-projet de synthèse."],
-      ["Examen IoT 2025", "Examen", "IoT", "Sujet, grille d'évaluation et corrigé détaillé."],
-      ["PFE Cybersécurité 5G", "PFE", "Télécom", "Rapport complet sur la sécurisation d'un cœur de réseau."],
-      ["Guide du livret étudiant", "Guide", "Général", "Informations académiques, calendrier et contacts utiles."]
+      ["Dossier 1LT", "Cours", "Licence", "Ressources complètes pour la 1ère année Licence Télécom.", "https://drive.google.com/drive/folders/1C4rp6VaUJn1MteKpW-pxVeyhqb_QCg5l"],
+      ["Dossier 1LM", "Cours", "Licence", "Ressources complètes pour la 1ère année Licence Multimédia.", "https://drive.google.com/drive/folders/1yX_p0MxP8RPQwStHI5oxvYFClPh8VKs8"],
+      ["Dossier 2LM", "Cours", "Licence", "Ressources complètes pour la 2ème année Licence Multimédia.", "https://drive.google.com/drive/folders/13plfKeyr3AFaHm0_Gu35WakRT8wrQtfY"],
+      ["Dossier 1IOT", "Cours", "Licence", "Ressources complètes pour la 1ère année Licence IoT.", "https://drive.google.com/drive/search?q=1iot"],
+      ["Cours React Complet", "Cours", "Multimédia", "Support de cours, TP et mini-projet de synthèse.", "https://drive.google.com/"],
+      ["Examen IoT 2025", "Examen", "IoT", "Sujet, grille d'évaluation et corrigé détaillé.", "https://drive.google.com/"],
+      ["PFE Cybersécurité 5G", "PFE", "Télécom", "Rapport complet sur la sécurisation d'un cœur de réseau.", "https://drive.google.com/"],
+      ["Guide du livret étudiant", "Guide", "Général", "Informations académiques, calendrier et contacts utiles.", "https://drive.google.com/"]
     ];
-    for (const [title, type, form, desc] of resources) {
-      await db.run("INSERT INTO resources (title, type, formation, description) VALUES (?, ?, ?, ?)", [title, type, form, desc]);
+    for (const [title, type, form, desc, link] of resources) {
+      await db.run("INSERT INTO resources (title, type, formation, description, link) VALUES (?, ?, ?, ?, ?)", [title, type, form, desc, link]);
+    }
+  }
+
+  // Ensure specific new links are present
+  const driveLinks = [
+    ["Dossier 1LT", "Cours", "Licence", "Ressources complètes pour la 1ère année Licence Télécom.", "https://drive.google.com/drive/folders/1C4rp6VaUJn1MteKpW-pxVeyhqb_QCg5l"],
+    ["Dossier 1LM", "Cours", "Licence", "Ressources complètes pour la 1ère année Licence Multimédia.", "https://drive.google.com/drive/folders/1yX_p0MxP8RPQwStHI5oxvYFClPh8VKs8"],
+    ["Dossier 2LM", "Cours", "Licence", "Ressources complètes pour la 2ème année Licence Multimédia.", "https://drive.google.com/drive/folders/13plfKeyr3AFaHm0_Gu35WakRT8wrQtfY"],
+    ["Dossier 1IOT", "Cours", "Licence", "Ressources complètes pour la 1ère année Licence IoT.", "https://drive.google.com/drive/search?q=1iot"]
+  ];
+
+  for (const [title, type, form, desc, link] of driveLinks) {
+    const existing = await db.get("SELECT id FROM resources WHERE title = ?", [title]);
+    if (!existing) {
+      await db.run("INSERT INTO resources (title, type, formation, description, link) VALUES (?, ?, ?, ?, ?)", [title, type, form, desc, link]);
     }
   }
 
